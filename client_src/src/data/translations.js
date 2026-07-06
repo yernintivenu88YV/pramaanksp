@@ -15,6 +15,7 @@ export const translations = {
     navCases: "Case Register",
     navResolution: "Identity Resolution",
     navSimilar: "Case Twins",
+    navFaceRec: "Face Recognition",
     navHistory: "Investigation History",
     navMap: "Live Crime Map",
     navGraph: "Entity Graph",

@@ -78,18 +78,18 @@ export function FileUploadZone({
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 font-sans">
       <div
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current && fileInputRef.current.click()}
-        className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-all cursor-pointer ${
+        className={`relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 text-center transition-all cursor-pointer ${
           dragOver
-            ? 'border-pramaan-primary bg-pramaan-primary/10'
+            ? 'border-[#3AAFA9] bg-[#DEF2F1]'
             : selectedFile
-            ? 'border-pramaan-success/50 bg-pramaan-success/5'
-            : 'border-pramaan-border bg-pramaan-elevated/50 hover:border-pramaan-secondary/40 hover:bg-pramaan-elevated'
+            ? 'border-[#3AAFA9] bg-[#DEF2F1]/60'
+            : 'border-[#B3E3DE] bg-[#DEF2F1]/30 hover:border-[#3AAFA9] hover:bg-[#DEF2F1]/60'
         }`}
       >
         <input
@@ -103,36 +103,36 @@ export function FileUploadZone({
         {selectedFile ? (
           <div className="flex flex-col items-center gap-2">
             {previewUrl ? (
-              <img src={previewUrl} alt="Preview" className="h-28 max-w-full rounded-lg object-contain border border-pramaan-border" />
+              <img src={previewUrl} alt="Preview" className="h-28 max-w-full rounded-xl object-contain border border-[#B3E3DE]" />
             ) : (
-              <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-pramaan-primary/20 text-pramaan-primary">
-                <File size={32} />
+              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#17252A] text-[#3AAFA9]">
+                <File size={28} />
               </div>
             )}
             <div className="flex items-center gap-2">
-              <CheckCircle size={16} className="text-pramaan-success" />
-              <span className="font-mono text-xs font-bold text-pramaan-text truncate max-w-xs">{selectedFile.name}</span>
-              <span className="text-[10px] font-mono text-pramaan-text-secondary">({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)</span>
-              <button onClick={clearFile} className="p-1 text-pramaan-critical hover:bg-pramaan-critical/20 rounded cursor-pointer" title="Remove File">
+              <CheckCircle size={16} className="text-[#3AAFA9]" />
+              <span className="font-mono text-xs font-bold text-[#17252A] truncate max-w-xs">{selectedFile.name}</span>
+              <span className="text-[10px] font-mono text-[#2B7A78]">({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)</span>
+              <button onClick={clearFile} className="p-1 text-red-600 hover:bg-red-50 rounded-lg cursor-pointer" title="Remove File">
                 <X size={14} />
               </button>
             </div>
           </div>
         ) : (
           <div className="space-y-2">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-pramaan-primary/15 text-pramaan-primary">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[#DEF2F1] text-[#2B7A78] border border-[#3AAFA9]/30">
               <UploadCloud size={24} />
             </div>
             <div>
-              <p className="text-xs font-bold text-pramaan-text">{label}</p>
-              <p className="text-[11px] text-pramaan-text-secondary mt-0.5">{sublabel}</p>
+              <p className="text-xs font-bold text-[#17252A]">{label}</p>
+              <p className="text-[11px] text-[#2B7A78] mt-0.5">{sublabel}</p>
             </div>
           </div>
         )}
       </div>
 
       {error && (
-        <div className="flex items-center gap-1.5 text-xs text-pramaan-critical">
+        <div className="flex items-center gap-1.5 text-xs text-red-600 font-medium">
           <AlertCircle size={14} />
           <span>{error}</span>
         </div>

@@ -3,9 +3,8 @@ import {
   LayoutDashboard, FolderKanban, BellRing, Share2,
   MapPinned, Fingerprint, CopyCheck, ScrollText,
   ShieldCheck, Sparkles, Lock, HelpCircle,
-  Search, Upload, ScanFace
+  Search, Upload, ScanFace, Shield, FileSearch, FileUp
 } from 'lucide-react';
-import { type } from '../../design/scale';
 import { canAccessView, ROLE_LABELS, requiredPermissionFor } from '../../access';
 import { translations } from '../../data/translations';
 
@@ -23,7 +22,8 @@ const groupsConfig = [
       { key: 'cases', labelKey: 'navCases', icon: FolderKanban, badge: 7 },
       { key: 'resolution', labelKey: 'navResolution', icon: Fingerprint },
       { key: 'similar', labelKey: 'navSimilar', icon: CopyCheck },
-      { key: 'facerec', labelKey: 'navFaceRec', icon: ScanFace },
+      { key: 'facerec', labelKey: 'navFaceRec', icon: ScanFace, customLabel: 'Face Recognition' },
+      { key: 'fingerprint', labelKey: 'navFingerprint', icon: Fingerprint, customLabel: 'Fingerprint Match' },
     ],
   },
   {
@@ -32,8 +32,8 @@ const groupsConfig = [
       { key: 'map', labelKey: 'navMap', icon: MapPinned },
       { key: 'graph', labelKey: 'navGraph', icon: Share2 },
       { key: 'assistant', labelKey: 'navAssistant', icon: Sparkles },
-      { key: 'docsearch', labelKey: 'navDocSearch', icon: Search },
-      { key: 'docupload', labelKey: 'navDocUpload', icon: Upload },
+      { key: 'docsearch', labelKey: 'navDocSearch', icon: FileSearch, customLabel: 'docsearch' },
+      { key: 'docupload', labelKey: 'navDocUpload', icon: FileUp, customLabel: 'docupload' },
     ],
   },
   {
@@ -45,61 +45,60 @@ const groupsConfig = [
   },
 ];
 
-export function Sidebar({ active, onChange, activeRole = 'SI', language = 'EN' }) {
+export function Sidebar({ active, onChange, activeRole = 'ACP', language = 'EN' }) {
   const [collapsed, setCollapsed] = useState(false);
-  const w = collapsed ? 'w-16' : 'w-16 md:w-60';
+  const w = collapsed ? 'w-16' : 'w-16 md:w-64';
   const t = translations[language] || translations.EN;
 
   return (
-    <aside className={`flex h-full ${w} shrink-0 flex-col border-r border-pramaan-border bg-sidebar transition-[width] duration-200`}>
-      <div className="flex h-[72px] shrink-0 items-center gap-2.5 border-b border-pramaan-border px-3.5">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-pramaan-primary/15 text-pramaan-primary">
-          <ShieldCheck size={18} strokeWidth={2} />
-        </div>
-        {!collapsed && (
-          <div className="min-w-0 leading-tight hidden md:block">
-            <div className="truncate text-pramaan-text" style={{ ...type.subheading, letterSpacing: '0.06em' }}>{t.brandTitle}</div>
-            <div className="truncate text-pramaan-text-secondary" style={type.micro}>{t.brandSubtitle}</div>
+    <aside className={`flex h-full self-stretch min-h-full ${w} shrink-0 flex-col bg-[#17252A] text-white transition-[width] duration-200 select-none z-20 shadow-xl font-sans`}>
+      
+      {/* Top Header Branding (Clean PRAMAAN branding) */}
+      <div className="p-4 sm:p-5 border-b border-[#2B7A78]/30 bg-[#121E22]">
+        <div className="flex items-center gap-3">
+          <div className="min-w-0 leading-tight">
+            <div className="truncate text-white font-black font-mono tracking-wider text-lg">PRAMAAN</div>
+            <div className="truncate text-[#DEF2F1]/80 text-[10px] font-semibold">KSP Crime Intelligence</div>
           </div>
-        )}
+        </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto py-3">
-        {groupsConfig.map((g) => (
-          <div key={g.headingKey} className="mb-4 px-2.5 last:mb-0">
+      {/* Navigation List */}
+      <nav className="flex-1 overflow-y-auto py-4 space-y-4 px-3">
+        {groupsConfig.map((g, idx) => (
+          <div key={`${g.headingKey}-${idx}`} className="space-y-1">
             {!collapsed && (
-              <div className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-wider text-pramaan-text-secondary/70 hidden md:block">
+              <div className="px-3 text-[10px] font-bold uppercase tracking-widest text-[#3AAFA9] hidden md:block mb-1.5">
                 {t[g.headingKey] || g.headingKey}
               </div>
             )}
-            <div className="space-y-0.5">
-              {g.items.map((item) => {
+            <div className="space-y-1">
+              {g.items.map((item, itemIdx) => {
                 const isAllowed = canAccessView(activeRole, item.key);
                 const isActive = active === item.key;
                 const Icon = item.icon;
-                const displayLabel = t[item.labelKey] || item.key;
+                const displayLabel = item.customLabel || t[item.labelKey] || item.key;
 
                 return (
                   <button
-                    key={item.key}
+                    key={`${item.key}-${itemIdx}`}
                     onClick={() => onChange(item.key)}
-                    className={`group relative flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors ${
+                    className={`group relative flex w-full items-center gap-3 rounded-full px-4 py-2 text-left transition-all cursor-pointer active:scale-95 ${
                       isActive
-                        ? 'bg-pramaan-primary/15 text-pramaan-primary font-bold'
+                        ? 'bg-[#2B7A78] text-white border border-[#3AAFA9] font-extrabold shadow-md ring-1 ring-[#3AAFA9]/50 scale-[1.02]'
                         : isAllowed
-                        ? 'text-pramaan-text-secondary hover:bg-pramaan-elevated hover:text-pramaan-text'
-                        : 'text-pramaan-text-secondary/40 hover:bg-pramaan-elevated/40'
+                        ? 'text-[#DEF2F1]/80 hover:bg-[#2B7A78]/30 hover:text-white font-medium'
+                        : 'text-slate-500/50 hover:bg-[#2B7A78]/10'
                     }`}
                   >
-                    <Icon size={17} strokeWidth={isActive ? 2.25 : 1.75} className="shrink-0" />
+                    <Icon size={17} strokeWidth={isActive ? 2.25 : 1.75} className={`shrink-0 ${isActive ? 'text-[#3AAFA9]' : 'text-slate-400'}`} />
                     {!collapsed && <span className="truncate text-xs hidden md:inline">{displayLabel}</span>}
 
-                    {!isAllowed && !collapsed && (
-                      <Lock size={12} className="ml-auto shrink-0 text-pramaan-text-secondary/40 hidden md:block" title={`Requires ${requiredPermissionFor(item.key)}`} />
-                    )}
-
-                    {item.badge && !collapsed && isAllowed && (
-                      <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-pramaan-primary/20 px-1 text-[10px] font-mono font-bold text-pramaan-primary hidden md:flex">
+                    {/* Badge Pill */}
+                    {item.badge && !collapsed && (
+                      <span className={`ml-auto flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-mono font-bold shadow-xs ${
+                        isActive ? 'bg-[#3AAFA9] text-[#17252A]' : 'bg-[#2B7A78] text-white'
+                      }`}>
                         {item.badge}
                       </span>
                     )}
@@ -111,15 +110,14 @@ export function Sidebar({ active, onChange, activeRole = 'SI', language = 'EN' }
         ))}
       </nav>
 
-      <div className="border-t border-pramaan-border p-3">
-        <div className="flex items-center gap-2 rounded-lg bg-pramaan-elevated p-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded bg-pramaan-primary/20 text-xs font-bold text-pramaan-primary">
-            {activeRole}
-          </div>
+      {/* Footer Role Badge Info */}
+      <div className="p-3 border-t border-[#2B7A78]/30 bg-[#121E22] text-xs">
+        <div className="flex items-center gap-2 px-2 py-1.5 rounded-full bg-[#17252A] border border-[#2B7A78]">
+          <Shield size={14} className="text-[#3AAFA9]" />
           {!collapsed && (
             <div className="min-w-0 flex-1 hidden md:block">
-              <div className="truncate text-[11px] font-bold text-pramaan-text">{ROLE_LABELS[activeRole]}</div>
-              <div className="truncate text-[10px] text-pramaan-text-secondary font-mono">Clearance Granted</div>
+              <div className="text-[10px] font-mono text-[#DEF2F1] truncate font-bold">CLEARANCE LEVEL</div>
+              <div className="text-xs font-bold text-white truncate">{ROLE_LABELS[activeRole] || activeRole}</div>
             </div>
           )}
         </div>

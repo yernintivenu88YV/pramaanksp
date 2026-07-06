@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { api } from '../../api/client';
+import { FileText, Sparkles, AlertCircle, ArrowRight, Shield } from 'lucide-react';
 
 export function CaseDetailView({ activeRole }) {
   const [ctTopK, setCtTopK] = useState(4);
@@ -56,154 +57,163 @@ export function CaseDetailView({ activeRole }) {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header & Dossier Action */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+    <div className="space-y-6 font-sans select-none">
+      
+      {/* Header & Dossier Action Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-[#FEFFFF] p-5 rounded-2xl border border-[#B3E3DE] shadow-xs">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+          <h1 className="text-xl font-black tracking-tight text-[#17252A] flex items-center gap-2">
             <span>ಪ್ರಕರಣ ವಿವರ ಮತ್ತು ಸಿಗ್ನೇಚರ್ ಟ್ವಿನ್</span>
-            <span className="text-gray-500 font-normal">|</span>
-            <span className="text-cyan-400">Case Dossier & Twin Matcher</span>
+            <span className="text-[#2B7A78] font-normal">|</span>
+            <span className="text-[#3AAFA9]">Case Dossier & Twin Matcher</span>
           </h1>
-          <p className="text-xs text-gray-400 mt-1">
-            Multilingual vector similarity engine (Kannada & English narratives) with transparent sub-score breakdown bars.
+          <p className="text-xs text-[#2B7A78] mt-1 font-medium">
+            Multilingual vector similarity engine (Kannada & English narratives) with sub-score breakdown bars.
           </p>
         </div>
+        
         <div className="flex items-center gap-3">
           <button
             onClick={generateDossierPdf}
             disabled={pdfLoading || activeRole === 'Analyst'}
-            className={`px-4 py-2 rounded text-xs font-bold transition-colors flex items-center gap-2 ${
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-xs ${
               activeRole === 'Analyst'
-                ? 'bg-gray-800 text-gray-500 border border-gray-700 cursor-not-allowed'
-                : 'bg-emerald-600/30 text-emerald-300 border border-emerald-500/50 hover:bg-emerald-600/50'
+                ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
+                : 'bg-[#17252A] text-[#FEFFFF] hover:bg-[#2B7A78] border border-[#17252A]'
             }`}
           >
-            📄 {pdfLoading ? 'Generating Dossier...' : 'Generate Official Dossier PDF'}
+            <FileText size={15} className="text-[#3AAFA9]" />
+            {pdfLoading ? 'Generating Dossier...' : 'Generate Official Dossier PDF'}
           </button>
         </div>
       </div>
 
       {pdfNotice && (
-        <div className={`p-3 rounded text-xs border ${pdfNotice.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-red-500/10 border-red-500/30 text-red-400'}`}>
+        <div className={`p-4 rounded-xl text-xs font-medium border flex items-center gap-2 ${
+          pdfNotice.type === 'success' ? 'bg-[#DEF2F1] border-[#3AAFA9]/40 text-[#17252A]' : 'bg-red-50 border-red-200 text-red-700'
+        }`}>
+          <AlertCircle size={16} />
           {pdfNotice.msg}
         </div>
       )}
 
       {/* Target Case Overview */}
-      <div className="pramaan-card p-5 space-y-3">
-        <div className="flex justify-between items-center border-b border-white/10 pb-2">
-          <h2 className="text-base font-bold text-white">Target Case: {targetCase.case_id}</h2>
-          <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded text-xs font-bold">
+      <div className="bg-[#FEFFFF] p-5 rounded-2xl border border-[#B3E3DE] shadow-xs space-y-4">
+        <div className="flex justify-between items-center border-b border-[#B3E3DE] pb-3">
+          <h2 className="text-base font-extrabold text-[#17252A]">Target Case: {targetCase.case_id}</h2>
+          <span className="px-3 py-1 bg-[#DEF2F1] text-[#2B7A78] border border-[#3AAFA9]/40 rounded-lg text-xs font-mono font-bold">
             {targetCase.crime_type}
           </span>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-300">
-          <div>
-            <div className="text-gray-400 mb-1">Modus Operandi (MO):</div>
-            <div className="bg-[#1b1f26] p-2.5 rounded border border-white/5">{targetCase.modus_operandi}</div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div className="bg-[#DEF2F1]/50 p-4 rounded-xl border border-[#B3E3DE]">
+            <div className="text-[#2B7A78] font-bold uppercase tracking-wider text-[10px] mb-1">Modus Operandi (MO):</div>
+            <div className="text-[#17252A] font-medium leading-relaxed">{targetCase.modus_operandi}</div>
           </div>
-          <div>
-            <div className="text-gray-400 mb-1">FIR Narrative Description:</div>
-            <div className="bg-[#1b1f26] p-2.5 rounded border border-white/5">{targetCase.narrative_text}</div>
+          <div className="bg-[#DEF2F1]/50 p-4 rounded-xl border border-[#B3E3DE]">
+            <div className="text-[#2B7A78] font-bold uppercase tracking-wider text-[10px] mb-1">FIR Narrative Description:</div>
+            <div className="text-[#17252A] font-medium leading-relaxed">{targetCase.narrative_text}</div>
           </div>
         </div>
       </div>
 
       {/* Case-Twin Controls & Match Action */}
-      <div className="pramaan-card p-5 space-y-4">
+      <div className="bg-[#FEFFFF] p-5 rounded-2xl border border-[#B3E3DE] shadow-xs space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <label className="text-xs text-gray-300 font-bold">Top-K Twin Matches:</label>
+            <label className="text-xs text-[#17252A] font-bold">Top-K Twin Matches:</label>
             <input
               type="number"
               value={ctTopK}
               onChange={(e) => setCtTopK(e.target.value)}
               min="1" max="4"
-              className="w-16 bg-[#1b1f26] border border-white/10 text-white text-xs px-2 py-1 rounded font-mono"
+              className="w-16 bg-[#DEF2F1] border border-[#B3E3DE] text-[#17252A] text-xs px-2.5 py-1.5 rounded-lg font-mono font-bold outline-none"
             />
           </div>
           <button
             onClick={runMatch}
             disabled={ctLoading}
-            className="px-4 py-2 bg-cyan-600/30 text-cyan-300 border border-cyan-500/50 rounded text-xs font-bold hover:bg-cyan-600/50 transition-colors"
+            className="px-4 py-2.5 bg-[#17252A] text-[#FEFFFF] hover:bg-[#2B7A78] border border-[#17252A] rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs flex items-center gap-2"
           >
+            <Sparkles size={14} className="text-[#3AAFA9]" />
             {ctLoading ? 'Computing Multilingual Matches...' : 'Find Signature Twins'}
           </button>
         </div>
 
         {ctError && (
-          <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded text-xs">
-            ⚠️ {ctError}
+          <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2">
+            <AlertCircle size={16} />
+            {ctError}
           </div>
         )}
 
         {/* Ranked Similarity Results with Breakdown Bars */}
         {ctResult && ctResult.ranked_similarity && (
           <div className="space-y-4 pt-2">
-            <h3 className="text-sm font-bold text-white border-b border-white/10 pb-2">
+            <h3 className="text-sm font-extrabold text-[#17252A] border-b border-[#B3E3DE] pb-2">
               Ranked Case-Twin Matches & Sub-Score Breakdown
             </h3>
 
             <div className="space-y-3">
               {ctResult.ranked_similarity.map((item) => (
-                <div key={item.case_id} className="bg-[#1b1f26] border border-white/10 rounded-lg p-4 space-y-3">
+                <div key={item.case_id} className="bg-[#FEFFFF] border border-[#B3E3DE] rounded-xl p-4 space-y-3 shadow-xs">
                   <div className="flex justify-between items-center">
-                    <span className="font-bold text-cyan-400 text-sm">{item.case_id}</span>
-                    <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded font-mono font-bold text-xs">
+                    <span className="font-extrabold text-[#17252A] text-sm">{item.case_id}</span>
+                    <span className="px-3 py-1 bg-[#3AAFA9] text-[#17252A] rounded-lg font-mono font-bold text-xs shadow-xs">
                       Total Score: {Number(item.total_score).toFixed(3)}
                     </span>
                   </div>
 
                   {/* Sub-Score Breakdown Progress Bars */}
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-[11px] text-gray-400">
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-[11px] text-[#2B7A78]">
                     <div>
                       <div className="flex justify-between mb-1">
                         <span>Location:</span>
-                        <span className="text-white font-mono">{Number(item.breakdown.location).toFixed(2)}</span>
+                        <span className="text-[#17252A] font-mono font-bold">{Number(item.breakdown.location).toFixed(2)}</span>
                       </div>
-                      <div className="w-full bg-gray-800 h-1.5 rounded overflow-hidden">
-                        <div className="bg-cyan-500 h-full" style={{ width: `${Math.min(100, item.breakdown.location * 100)}%` }}></div>
+                      <div className="w-full bg-[#DEF2F1] h-2 rounded-full overflow-hidden">
+                        <div className="bg-[#3AAFA9] h-full" style={{ width: `${Math.min(100, item.breakdown.location * 100)}%` }}></div>
                       </div>
                     </div>
 
                     <div>
                       <div className="flex justify-between mb-1">
                         <span>Time Closeness:</span>
-                        <span className="text-white font-mono">{Number(item.breakdown.time).toFixed(2)}</span>
+                        <span className="text-[#17252A] font-mono font-bold">{Number(item.breakdown.time).toFixed(2)}</span>
                       </div>
-                      <div className="w-full bg-gray-800 h-1.5 rounded overflow-hidden">
-                        <div className="bg-amber-500 h-full" style={{ width: `${Math.min(100, item.breakdown.time * 100)}%` }}></div>
+                      <div className="w-full bg-[#DEF2F1] h-2 rounded-full overflow-hidden">
+                        <div className="bg-[#17252A] h-full" style={{ width: `${Math.min(100, item.breakdown.time * 100)}%` }}></div>
                       </div>
                     </div>
 
                     <div>
                       <div className="flex justify-between mb-1">
                         <span>MO Similarity:</span>
-                        <span className="text-white font-mono">{Number(item.breakdown.mo).toFixed(2)}</span>
+                        <span className="text-[#17252A] font-mono font-bold">{Number(item.breakdown.mo).toFixed(2)}</span>
                       </div>
-                      <div className="w-full bg-gray-800 h-1.5 rounded overflow-hidden">
-                        <div className="bg-purple-500 h-full" style={{ width: `${Math.min(100, item.breakdown.mo * 100)}%` }}></div>
+                      <div className="w-full bg-[#DEF2F1] h-2 rounded-full overflow-hidden">
+                        <div className="bg-[#2B7A78] h-full" style={{ width: `${Math.min(100, item.breakdown.mo * 100)}%` }}></div>
                       </div>
                     </div>
 
                     <div>
                       <div className="flex justify-between mb-1">
                         <span>Weapon Match:</span>
-                        <span className="text-white font-mono">{Number(item.breakdown.weapon).toFixed(2)}</span>
+                        <span className="text-[#17252A] font-mono font-bold">{Number(item.breakdown.weapon).toFixed(2)}</span>
                       </div>
-                      <div className="w-full bg-gray-800 h-1.5 rounded overflow-hidden">
-                        <div className="bg-emerald-500 h-full" style={{ width: `${Math.min(100, item.breakdown.weapon * 100)}%` }}></div>
+                      <div className="w-full bg-[#DEF2F1] h-2 rounded-full overflow-hidden">
+                        <div className="bg-[#3AAFA9] h-full" style={{ width: `${Math.min(100, item.breakdown.weapon * 100)}%` }}></div>
                       </div>
                     </div>
 
                     <div>
                       <div className="flex justify-between mb-1">
                         <span>Narrative Vector:</span>
-                        <span className="text-white font-mono">{Number(item.breakdown.narrative).toFixed(2)}</span>
+                        <span className="text-[#17252A] font-mono font-bold">{Number(item.breakdown.narrative).toFixed(2)}</span>
                       </div>
-                      <div className="w-full bg-gray-800 h-1.5 rounded overflow-hidden">
-                        <div className="bg-blue-500 h-full" style={{ width: `${Math.min(100, item.breakdown.narrative * 100)}%` }}></div>
+                      <div className="w-full bg-[#DEF2F1] h-2 rounded-full overflow-hidden">
+                        <div className="bg-[#17252A] h-full" style={{ width: `${Math.min(100, item.breakdown.narrative * 100)}%` }}></div>
                       </div>
                     </div>
                   </div>

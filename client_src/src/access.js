@@ -33,20 +33,21 @@ const AGGREGATE = ['aggregate_analytics', 'district_rollup', 'state_rollup'];
  * investigators (SI/ACP) from analysts and policy makers.
  */
 export const VIEW_ACCESS = {
-  overview:   { any: AGGREGATE,             label: 'Command Overview' },
-  alerts:     { any: AGGREGATE,             label: 'Alert Stream' },
-  map:        { any: AGGREGATE,             label: 'Live Crime Map' },
-  audit:      { any: AGGREGATE,             label: 'Audit & Compliance' },
-  cases:      { any: ['own_case_detail'],   label: 'Case Register' },
-  resolution: { any: ['own_case_detail'],   label: 'Identity Resolution' },
-  similar:    { any: ['own_case_detail'],   label: 'Case Twins' },
-  history:    { any: ['own_case_detail'],   label: 'Investigation History' },
-  graph:      { any: ['own_case_detail'],   label: 'Entity Graph' },
-  facerec:    { any: ['own_case_detail'],   label: 'Face Recognition' },
-  assistant:  { any: ['own_case_detail'],   label: 'AI Assistant' },
-  helpdesk:   { any: AGGREGATE,             label: 'Public Help Desk' },
-  docsearch:  { any: ['own_case_detail'],   label: 'Document Search' },
-  docupload:  { any: ['own_case_detail'],   label: 'Upload Documents' },
+  overview:    { any: AGGREGATE,             label: 'Command Overview' },
+  alerts:      { any: AGGREGATE,             label: 'Alert Stream' },
+  map:         { any: AGGREGATE,             label: 'Live Crime Map' },
+  audit:       { any: AGGREGATE,             label: 'Audit & Compliance' },
+  cases:       { any: ['own_case_detail'],   label: 'Case Register' },
+  resolution:  { any: ['own_case_detail'],   label: 'Identity Resolution' },
+  fingerprint: { any: ['own_case_detail'],   label: 'Fingerprint Match' },
+  similar:     { any: ['own_case_detail'],   label: 'Case Twins' },
+  history:     { any: ['own_case_detail'],   label: 'Investigation History' },
+  graph:       { any: ['own_case_detail'],   label: 'Entity Graph' },
+  facerec:     { any: ['own_case_detail'],   label: 'Face Recognition' },
+  assistant:   { any: ['own_case_detail'],   label: 'AI Assistant' },
+  helpdesk:    { any: AGGREGATE,             label: 'Public Help Desk' },
+  docsearch:   { any: ['own_case_detail'],   label: 'Document Search' },
+  docupload:   { any: ['own_case_detail'],   label: 'Upload Documents' },
 };
 
 export function permissionsFor(role) {

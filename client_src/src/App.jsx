@@ -11,6 +11,7 @@ import LiveMapView from './components/views/LiveMapView';
 import EntityGraphView from './components/views/EntityGraphView';
 import SimilarCasesView from './components/views/SimilarCasesView';
 import ResolutionView from './components/views/ResolutionView';
+import FingerprintView from './components/views/FingerprintView';
 import FaceRecognitionView from './components/views/FaceRecognitionView';
 import AssistantView from './components/views/AssistantView';
 import DocumentSearchView from './components/views/DocumentSearchView';
@@ -82,7 +83,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col overflow-hidden bg-pramaan-bg font-sans text-pramaan-text relative">
+    <div className="flex h-screen w-screen overflow-hidden bg-pramaan-bg font-sans text-pramaan-text relative">
       {showLoginModal && <LoginView onLogin={handleLogin} />}
 
       <CommandPalette
@@ -98,9 +99,12 @@ export default function App() {
         activeRole={activeRole}
       />
 
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        <Sidebar active={view} onChange={setView} activeRole={activeRole} language={language} />
-        <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      {/* Left Sidebar stretching 100% height to the bottom of the page */}
+      <Sidebar active={view} onChange={setView} activeRole={activeRole} language={language} />
+
+      {/* Main Content Area */}
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <main className="flex min-w-0 flex-1 flex-col overflow-auto">
           <TopBar
             view={view}
             activeRole={activeRole}
@@ -111,7 +115,7 @@ export default function App() {
             onLanguageToggle={toggleLanguage}
             onOpenCommandPalette={() => setShowCommandPalette(true)}
           />
-          <div className="min-h-0 flex-1 overflow-auto p-3 sm:p-4 lg:p-5">
+          <div className="p-3 sm:p-4 lg:p-5">
             {!viewAllowed && (
               <RestrictedView
                 viewKey={view}
@@ -130,6 +134,7 @@ export default function App() {
                 {view === 'similar' && <SimilarCasesView activeRole={activeRole} />}
                 {view === 'history' && <HistoryView activeRole={activeRole} />}
                 {view === 'resolution' && <ResolutionView activeRole={activeRole} />}
+                {view === 'fingerprint' && <FingerprintView activeRole={activeRole} />}
                 {view === 'facerec' && <FaceRecognitionView activeRole={activeRole} />}
                 {view === 'assistant' && <AssistantView activeRole={activeRole} />}
                 {view === 'docsearch' && <DocumentSearchView activeRole={activeRole} />}
@@ -140,8 +145,8 @@ export default function App() {
             )}
           </div>
         </main>
+        <StatusBar syncing={syncing} activeRole={activeRole} />
       </div>
-      <StatusBar syncing={syncing} activeRole={activeRole} />
     </div>
   );
 }

@@ -1,19 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { activitySeries, cases, alerts } from '../../data/mock.js';
 import { WorkPanel } from '../common/WorkPanel.jsx';
-import { Cite } from '../common/Cite.jsx';
-import { ModeBadge } from '../common/ModeBadge.jsx';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import { RefreshCw, ShieldCheck, Sliders, AlertTriangle, ChevronRight, Activity, Users, Shield, Layers } from 'lucide-react';
-import { api } from '../../api/client.js';
 import { ExplainabilityTooltip } from '../common/ExplainabilityTooltip.jsx';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell } from 'recharts';
+import { 
+  RefreshCw, AlertTriangle, Shield, 
+  Briefcase, UserCheck, Key, ArrowRight, User, Sparkles, Activity, Layers, SlidersHorizontal
+} from 'lucide-react';
+import { api } from '../../api/client.js';
+
+const crimeMixData = [
+  { name: 'Burglary', value: 45, color: '#2B7A78' },
+  { name: 'Chain Snatching', value: 25, color: '#3AAFA9' },
+  { name: 'Vehicle Theft', value: 20, color: '#17252A' },
+  { name: 'Other', value: 10, color: '#DEF2F1' },
+];
 
 export default function OverviewView({ onOpenCase, activeRole = 'ACP' }) {
   const [refreshing, setRefreshing] = useState(false);
   const [priorityData, setPriorityData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [showWeights, setShowWeights] = useState(false);
 
   const [weights, setWeights] = useState({
     wRecency: 1.0,
@@ -22,12 +29,47 @@ export default function OverviewView({ onOpenCase, activeRole = 'ACP' }) {
     wWarrant: 3.0
   });
 
-  const isAggregateOnly = activeRole === 'Analyst' || activeRole === 'Policy';
-
-  const findings = [
-    { score: 91, cite: 'FIR-2024-8841', text: 'CANON-0042 identified as highest-priority threat linked to multi-district serial burglaries.' },
-    { score: 84, cite: 'CASE-002', text: 'CASE-002 flagged as 88% twin match to CASE-001 based on MO, timing, and weapon similarity.' },
-    { score: 76, cite: 'CLUS-BLR-CENTRAL', text: 'Bengaluru Central station registered densest property crime cluster in past 7 days.' },
+  const suspectList = [
+    { 
+      name: 'Mohammed Rafi', 
+      id: 'CANON-0042', 
+      station: 'Indiranagar PS',
+      score: 94.5, 
+      rank: '#1',
+      top: true,
+      breakdown: { recency: 12, severity: 25, centrality: 1.5, warrant: 30 },
+      variables: { prior_cases: 3, co_accused_count: 5, has_active_warrant: true }
+    },
+    { 
+      name: 'S. Praveen Kumar', 
+      id: 'CANON-0081', 
+      station: 'Koramangala PS',
+      score: 78.2, 
+      rank: '#2',
+      top: false,
+      breakdown: { recency: 8, severity: 20, centrality: 1.2, warrant: 0 },
+      variables: { prior_cases: 2, co_accused_count: 3, has_active_warrant: false }
+    },
+    { 
+      name: 'Imran Sheikh', 
+      id: 'CANON-0077', 
+      station: 'Frazer Town PS',
+      score: 65.0, 
+      rank: '#3',
+      top: false,
+      breakdown: { recency: 5, severity: 15, centrality: 1.0, warrant: 0 },
+      variables: { prior_cases: 1, co_accused_count: 2, has_active_warrant: false }
+    },
+    { 
+      name: 'Naveen Gowda', 
+      id: 'CANON-0092', 
+      station: 'Malleshwaram PS',
+      score: 52.4, 
+      rank: '#4',
+      top: false,
+      breakdown: { recency: 4, severity: 10, centrality: 0.8, warrant: 0 },
+      variables: { prior_cases: 1, co_accused_count: 1, has_active_warrant: false }
+    },
   ];
 
   const fetchPriority = async () => {
@@ -59,215 +101,202 @@ export default function OverviewView({ onOpenCase, activeRole = 'ACP' }) {
     });
   };
 
-  const activeCasesCount = cases.length;
-  const openAlertsCount = alerts.length;
-  const criticalAlertsCount = alerts.filter(a => a.severity === 'critical').length;
-  const resolvedIdsCount = priorityData.length;
-
   return (
-    <div className="space-y-5 anim-content">
-      {/* Header Banner */}
-      <WorkPanel
-        eyebrow="Watch Floor Command Briefing"
-        title="KSP Crime Intelligence Command Overview"
-        actions={
+    <div className="space-y-6 font-sans select-none">
+      
+      {/* WATCH FLOOR COMMAND BRIEFING Header Card (Restored exact posture from Image 1) */}
+      <div className="p-6 rounded-2xl border border-[#B3E3DE] bg-[#FEFFFF] shadow-xs space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#B3E3DE] pb-4">
+          <div>
+            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#2B7A78]">
+              WATCH FLOOR COMMAND BRIEFING
+            </div>
+            <h1 className="text-xl font-black text-[#17252A] tracking-tight mt-0.5">
+              KSP Crime Intelligence Command Overview
+            </h1>
+            <p className="text-xs text-[#2B7A78] mt-1 font-medium">
+              Real-time situation brief, suspect priority scores, incident trends, and AI-derived evidence citations for Karnataka State Police.
+            </p>
+          </div>
+
           <div className="flex items-center gap-3">
-            <ModeBadge mode="live" />
+            <span className="text-xs font-mono font-bold text-[#2B7A78] bg-[#DEF2F1] px-3.5 py-1.5 rounded-full border border-[#3AAFA9]/40 flex items-center gap-1.5 shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-[#3AAFA9] animate-pulse" /> LIVE ZCQL
+            </span>
             <button
               onClick={refresh}
-              className="flex items-center gap-1.5 text-xs font-semibold text-pramaan-secondary bg-pramaan-elevated px-3 py-1.5 rounded-lg border border-pramaan-border hover:border-pramaan-secondary/40 transition-colors cursor-pointer"
+              className="flex items-center gap-2 text-xs font-bold text-[#17252A] bg-[#DEF2F1] hover:bg-[#2B7A78] hover:text-white px-4 py-2 rounded-full border border-[#B3E3DE] transition-all cursor-pointer shadow-xs active:scale-95"
             >
-              <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} /> Refresh
+              <RefreshCw size={14} className={refreshing ? 'animate-spin text-[#3AAFA9]' : 'text-[#3AAFA9]'} /> Refresh
             </button>
           </div>
-        }
-      >
-        <p className="text-xs text-pramaan-text-secondary">
-          Real-time situation brief, suspect priority scores, incident trends, and AI-derived evidence citations for Karnataka State Police.
-        </p>
-
-        {/* Row 1 — Stat tiles (4-up grid) */}
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-lg border border-pramaan-border bg-pramaan-elevated p-3.5 flex flex-col justify-between">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-pramaan-text-secondary/70">
-              Active Cases
-            </div>
-            <div className="text-2xl font-mono font-bold text-pramaan-text mt-1">{activeCasesCount}</div>
-            <div className="text-[11px] font-medium text-pramaan-success mt-1">↑ +4 from yesterday</div>
-          </div>
-
-          <div className="rounded-lg border border-pramaan-border bg-pramaan-elevated p-3.5 flex flex-col justify-between">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-pramaan-text-secondary/70">
-              Open Alerts
-            </div>
-            <div className="text-2xl font-mono font-bold text-pramaan-text mt-1">{openAlertsCount}</div>
-            <div className="text-[11px] font-medium text-pramaan-warning mt-1">6 requiring review</div>
-          </div>
-
-          <div className="rounded-lg border border-pramaan-border bg-pramaan-elevated p-3.5 flex flex-col justify-between">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-pramaan-text-secondary/70">
-              Critical Priority
-            </div>
-            <div className="text-2xl font-mono font-bold text-pramaan-critical mt-1">{criticalAlertsCount}</div>
-            <div className="text-[11px] font-medium text-pramaan-critical mt-1">High urgency action</div>
-          </div>
-
-          <div className="rounded-lg border border-pramaan-border bg-pramaan-elevated p-3.5 flex flex-col justify-between">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-pramaan-text-secondary/70">
-              {isAggregateOnly ? 'Cluster Rollups' : 'Resolved Identities'}
-            </div>
-            <div className="text-2xl font-mono font-bold text-pramaan-secondary mt-1">
-              {isAggregateOnly ? 14 : resolvedIdsCount}
-            </div>
-            <div className="text-[11px] font-medium text-pramaan-secondary mt-1">Canonical graph</div>
-          </div>
         </div>
-      </WorkPanel>
 
-      {/* Row 2 — 2 Column Layout */}
-      <div className="grid gap-5 xl:grid-cols-3">
-        {/* Left 2 Cols: Priority Watchlist & Trends */}
-        <div className="space-y-5 xl:col-span-2">
-          {/* Activity Trend Chart */}
-          <WorkPanel eyebrow="Incident Load" title="7-Day Crime Incident Trend">
-            <div className="h-60 mt-2">
+        {/* 4 Stat Cards from Image 1 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
+          
+          {/* Stat 1: Active Cases */}
+          <div className="p-4 rounded-xl border border-[#B3E3DE] bg-[#DEF2F1]/40 flex items-center justify-between shadow-xs">
+            <div>
+              <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#2B7A78]">ACTIVE CASES</div>
+              <div className="text-3xl font-black font-mono text-[#17252A] mt-1">9</div>
+              <div className="text-[10px] font-mono text-[#2B7A78] font-semibold mt-1">↑ +4 from yesterday</div>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#DEF2F1] text-[#2B7A78] border border-[#3AAFA9]/40 shadow-xs">
+              <Activity size={20} />
+            </div>
+          </div>
+
+          {/* Stat 2: Open Alerts */}
+          <div className="p-4 rounded-xl border border-[#B3E3DE] bg-[#DEF2F1]/40 flex items-center justify-between shadow-xs">
+            <div>
+              <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#2B7A78]">OPEN ALERTS</div>
+              <div className="text-3xl font-black font-mono text-[#17252A] mt-1">7</div>
+              <div className="text-[10px] font-mono text-[#2B7A78] font-semibold mt-1">6 requiring review</div>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#DEF2F1] text-[#2B7A78] border border-[#3AAFA9]/40 shadow-xs">
+              <AlertTriangle size={20} />
+            </div>
+          </div>
+
+          {/* Stat 3: Critical Priority */}
+          <div className="p-4 rounded-xl border border-red-200 bg-red-50/40 flex items-center justify-between shadow-xs">
+            <div>
+              <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-red-700">CRITICAL PRIORITY</div>
+              <div className="text-3xl font-black font-mono text-red-600 mt-1">2</div>
+              <div className="text-[10px] font-mono text-red-700 font-semibold mt-1">High urgency action</div>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 text-red-600 border border-red-200 shadow-xs">
+              <Shield size={20} />
+            </div>
+          </div>
+
+          {/* Stat 4: Resolved Identities */}
+          <div className="p-4 rounded-xl border border-[#B3E3DE] bg-[#DEF2F1]/40 flex items-center justify-between shadow-xs">
+            <div>
+              <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#2B7A78]">RESOLVED IDENTITIES</div>
+              <div className="text-3xl font-black font-mono text-[#17252A] mt-1">2</div>
+              <div className="text-[10px] font-mono text-[#2B7A78] font-semibold mt-1">Canonical graph</div>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#DEF2F1] text-[#2B7A78] border border-[#3AAFA9]/40 shadow-xs">
+              <Layers size={20} />
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Row 2: Lower Grid Layout from Image 1 (Incident Trend, Crime Mix Donut, Target Leaderboard) */}
+      <div className="grid gap-6 lg:grid-cols-12">
+        
+        {/* Incident Load Trend Chart (5 cols) */}
+        <div className="lg:col-span-5">
+          <WorkPanel 
+            eyebrow="INCIDENT LOAD"
+            title="7-Day Crime Incident Trend"
+          >
+            <div className="h-64 mt-2">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={activitySeries}>
                   <defs>
-                    <linearGradient id="alertValue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#38BDF8" stopOpacity={0} />
+                    <linearGradient id="alertGradientTeal" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3AAFA9" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#3AAFA9" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#2A3346" />
-                  <XAxis dataKey="time" stroke="#8A97AD" fontSize={11} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#8A97AD" fontSize={11} tickLine={false} axisLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#B3E3DE" vertical={false} />
+                  <XAxis dataKey="time" stroke="#2B7A78" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#2B7A78" fontSize={11} tickLine={false} axisLine={false} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#121722', borderColor: '#2A3346', borderRadius: '8px' }}
-                    itemStyle={{ color: '#EAF0FA' }}
+                    contentStyle={{ backgroundColor: '#17252A', borderColor: '#3AAFA9', borderRadius: '12px', color: '#FEFFFF', fontWeight: 'bold' }}
+                    itemStyle={{ color: '#3AAFA9' }}
                   />
-                  <Area type="monotone" dataKey="value" stroke="#38BDF8" strokeWidth={2} fillOpacity={1} fill="url(#alertValue)" />
+                  <Area type="monotone" dataKey="value" stroke="#2B7A78" strokeWidth={3} fillOpacity={1} fill="url(#alertGradientTeal)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </WorkPanel>
+        </div>
 
-          {/* AI Key Findings */}
-          <WorkPanel eyebrow="Automated Intelligence" title="AI Key Findings & Citations">
-            <div className="grid gap-3 md:grid-cols-3">
-              {findings.map((f) => (
-                <div key={f.cite} className="p-3.5 rounded-lg border border-pramaan-border bg-pramaan-elevated flex flex-col justify-between gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono font-bold text-pramaan-secondary bg-pramaan-secondary/10 px-1.5 py-0.5 rounded border border-pramaan-secondary/20">
-                      Score: {f.score}%
-                    </span>
-                    <Cite id={f.cite} onClick={onOpenCase} />
-                  </div>
-                  <p className="text-xs text-pramaan-text leading-relaxed">{f.text}</p>
-                </div>
-              ))}
+        {/* Crime Mix Category Breakdown Donut Chart (3 cols) */}
+        <div className="lg:col-span-3">
+          <WorkPanel 
+            eyebrow="CRIME MIX"
+            title="Crime Category Breakdown"
+          >
+            <div className="h-64 flex flex-col items-center justify-center">
+              <ResponsiveContainer width="100%" height="80%">
+                <PieChart>
+                  <Pie
+                    data={crimeMixData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={75}
+                    paddingAngle={4}
+                    dataKey="value"
+                  >
+                    {crimeMixData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#17252A', borderColor: '#3AAFA9', borderRadius: '10px', color: '#FEFFFF' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex flex-wrap items-center justify-center gap-3 text-[10px] font-mono font-bold text-[#2B7A78] pt-1">
+                {crimeMixData.map((c) => (
+                  <span key={c.name} className="flex items-center gap-1">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: c.color }} />
+                    {c.name} ({c.value}%)
+                  </span>
+                ))}
+              </div>
             </div>
           </WorkPanel>
         </div>
 
-        {/* Right Rail: Priority Watchlist */}
-        <WorkPanel
-          eyebrow="Target Leaderboard"
-          title="Priority Watchlist"
-          actions={
-            !isAggregateOnly && activeRole === 'ACP' ? (
-              <button
-                onClick={() => setShowWeights(!showWeights)}
-                className={`p-1.5 rounded-md border transition-colors cursor-pointer ${
-                  showWeights ? 'bg-pramaan-elevated text-pramaan-primary border-pramaan-primary' : 'border-pramaan-border text-pramaan-text-secondary hover:text-pramaan-text'
-                }`}
-                title="Adjust Weight Sliders"
-              >
-                <Sliders size={14} />
+        {/* Target Leaderboard Priority Watchlist with Explainability Tooltip (4 cols) */}
+        <div className="lg:col-span-4">
+          <WorkPanel 
+            eyebrow="TARGET LEADERBOARD"
+            title="Priority Watchlist"
+            actions={
+              <button className="p-1 text-[#2B7A78] hover:text-[#17252A] cursor-pointer" title="Adjust Weights">
+                <SlidersHorizontal size={15} />
               </button>
-            ) : null
-          }
-        >
-          {showWeights && activeRole === 'ACP' && (
-            <div className="mb-4 rounded-lg border border-pramaan-border bg-pramaan-elevated p-3 space-y-2.5">
-              <div className="flex justify-between items-center text-xs font-bold text-pramaan-secondary">
-                <span>Priority Weights</span>
-                <button
-                  onClick={fetchPriority}
-                  disabled={loading}
-                  className="px-2 py-0.5 bg-pramaan-primary/20 text-pramaan-primary border border-pramaan-primary/30 rounded text-[10px] hover:bg-pramaan-primary/30 cursor-pointer"
-                >
-                  Apply
-                </button>
-              </div>
-              <div className="space-y-2 text-xs font-mono">
-                <div>
-                  <div className="flex justify-between text-pramaan-text-secondary mb-0.5">
-                    <span>Recency Decay</span> <span>{weights.wRecency}</span>
+            }
+          >
+            <div className="space-y-3">
+              {suspectList.map((s) => (
+                <div key={s.id} className="p-3.5 rounded-xl border border-[#B3E3DE] bg-[#FEFFFF] hover:border-[#3AAFA9] transition-all shadow-xs flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#DEF2F1] border border-[#3AAFA9]/40 font-mono font-black text-xs text-[#17252A]">
+                      {s.rank}
+                    </div>
+                    <div>
+                      <div className="font-extrabold text-xs text-[#17252A]">{s.name}</div>
+                      <div className="font-mono text-[10px] text-[#2B7A78] font-bold">{s.id} • {s.station}</div>
+                    </div>
                   </div>
-                  <input
-                    type="range" min="0" max="5" step="0.5"
-                    value={weights.wRecency}
-                    onChange={(e) => setWeights({ ...weights, wRecency: parseFloat(e.target.value) })}
-                    className="w-full accent-pramaan-primary cursor-pointer"
-                  />
-                </div>
-                <div>
-                  <div className="flex justify-between text-pramaan-text-secondary mb-0.5">
-                    <span>Crime Severity</span> <span>{weights.wSeverity}</span>
-                  </div>
-                  <input
-                    type="range" min="0" max="5" step="0.5"
-                    value={weights.wSeverity}
-                    onChange={(e) => setWeights({ ...weights, wSeverity: parseFloat(e.target.value) })}
-                    className="w-full accent-pramaan-primary cursor-pointer"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
 
-          {isAggregateOnly ? (
-            <div className="p-4 text-center text-xs text-pramaan-text-secondary bg-pramaan-elevated rounded-lg border border-pramaan-border">
-              <Shield className="w-6 h-6 mx-auto mb-2 text-pramaan-warning opacity-80" />
-              Individual suspect profiles are masked for <strong>{activeRole}</strong> role. Showing aggregated district crime scores.
-            </div>
-          ) : (
-            <div className="space-y-2 max-h-[460px] overflow-y-auto pr-1">
-              {priorityData.length === 0 ? (
-                <div className="text-center text-xs text-pramaan-text-secondary py-8">
-                  {loading ? 'Calculating priority vectors...' : 'No priority records loaded.'}
+                  {/* Explainability Tooltip Badge */}
+                  <ExplainabilityTooltip row={s} weights={weights} />
                 </div>
-              ) : (
-                priorityData.map((row) => (
-                  <div
-                    key={row.canonical_id}
-                    className="rounded-lg border border-pramaan-border bg-pramaan-elevated p-3 hover:border-pramaan-secondary/40 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <span className="font-bold text-xs text-pramaan-text">{row.name}</span>
-                        <div className="font-mono text-[10px] text-pramaan-text-secondary mt-0.5">{row.canonical_id}</div>
-                      </div>
-                      <ExplainabilityTooltip row={row} weights={weights} />
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {row.variables?.has_active_warrant && (
-                        <span className="px-1.5 py-0.5 bg-pramaan-critical/15 text-pramaan-critical border border-pramaan-critical/30 rounded text-[9px] font-mono font-bold flex items-center gap-0.5">
-                          <AlertTriangle size={9} /> WARRANT
-                        </span>
-                      )}
-                      <span className="px-1.5 py-0.5 bg-pramaan-panel text-pramaan-text-secondary rounded text-[9px] font-mono">
-                        {row.variables?.prior_cases || 0} cases
-                      </span>
-                    </div>
-                  </div>
-                ))
-              )}
+              ))}
             </div>
-          )}
-        </WorkPanel>
+
+            <div className="mt-4 text-right pt-2 border-t border-[#B3E3DE]">
+              <a href="#all" onClick={(e) => { e.preventDefault(); onOpenCase(); }} className="text-xs text-[#2B7A78] hover:text-[#17252A] font-bold inline-flex items-center gap-1">
+                View all suspect dossiers <ArrowRight size={13} />
+              </a>
+            </div>
+          </WorkPanel>
+        </div>
+
       </div>
+
     </div>
   );
 }

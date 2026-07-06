@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
 @custom-variant dark (&:is(.dark *));
@@ -6,74 +6,50 @@
 :root {
   --font-size: 13px;
 
-  /* Pramaan Palette — Midnight Command */
-  --pramaan-bg: #0B0E14;
-  --pramaan-surface: #121722;
-  --pramaan-elevated: #1A2130;
-  --pramaan-panel: #232C3D;
-  --pramaan-border: #2A3346;
-  --pramaan-border-strong: #3A455C;
-  --pramaan-primary: #3B82F6;
-  --pramaan-secondary: #38BDF8;
-  --pramaan-signal: #22D3EE;
-  --pramaan-success: #34D399;
-  --pramaan-warning: #FBBF24;
-  --pramaan-critical: #F87171;
-  --pramaan-info: #A78BFA;
-  --pramaan-text: #EAF0FA;
-  --pramaan-text-secondary: #8A97AD;
+  /* Serio Verify Teal & Slate Palette (#17252A, #2B7A78, #3AAFA9, #DEF2F1, #FEFFFF) */
+  --pramaan-bg: #DEF2F1;
+  --pramaan-surface: #FEFFFF;
+  --pramaan-elevated: #EAF7F6;
+  --pramaan-panel: #D1ECE9;
+  --pramaan-border: #B3E3DE;
+  --pramaan-border-strong: #2B7A78;
+  --pramaan-primary: #17252A;
+  --pramaan-gold: #3AAFA9;
+  --pramaan-teal: #3AAFA9;
+  --pramaan-teal-dark: #2B7A78;
+  --pramaan-secondary: #2B7A78;
+  --pramaan-signal: #3AAFA9;
+  --pramaan-success: #10B981;
+  --pramaan-warning: #F59E0B;
+  --pramaan-critical: #EF4444;
+  --pramaan-info: #3AAFA9;
+  --pramaan-text: #17252A;
+  --pramaan-text-secondary: #2B7A78;
 
-  --background: #0B0E14;
-  --foreground: #EAF0FA;
-  --card: #121722;
-  --card-foreground: #EAF0FA;
-  --popover: #1A2130;
-  --popover-foreground: #EAF0FA;
-  --primary: #3B82F6;
-  --primary-foreground: #0B0E14;
-  --secondary: #22D3EE;
-  --secondary-foreground: #0B0E14;
-  --muted: #121722;
-  --muted-foreground: #8A97AD;
-  --accent: #1A2130;
-  --accent-foreground: #EAF0FA;
-  --destructive: #F87171;
-  --destructive-foreground: #0B0E14;
-  --border: #2A3346;
-  --input: #2A3346;
-  --input-background: #121722;
-  --switch-background: #2A3346;
-  --radius: 0.625rem;
-  --sidebar: #0B0E14;
-  --sidebar-foreground: #8A97AD;
-  --sidebar-primary: #3B82F6;
-  --sidebar-primary-foreground: #0B0E14;
-  --sidebar-accent: #1A2130;
-  --sidebar-accent-foreground: #EAF0FA;
-}
-
-/* Daytime Station Light Mode Palette */
-:root.light {
-  --pramaan-bg: #F6F8FB;
-  --pramaan-surface: #FFFFFF;
-  --pramaan-elevated: #EDF1F7;
-  --pramaan-panel: #E2E8F0;
-  --pramaan-border: #CBD5E1;
-  --pramaan-border-strong: #94A3B8;
-  --pramaan-primary: #0F2A4A;
-  --pramaan-secondary: #0284C7;
-  --pramaan-text: #0F172A;
-  --pramaan-text-secondary: #475569;
-
-  --background: #F6F8FB;
-  --foreground: #0F172A;
-  --card: #FFFFFF;
-  --card-foreground: #0F172A;
-  --popover: #EDF1F7;
-  --popover-foreground: #0F172A;
-  --primary: #0F2A4A;
-  --border: #CBD5E1;
-  --sidebar: #F6F8FB;
+  --background: #DEF2F1;
+  --foreground: #17252A;
+  --card: #FEFFFF;
+  --card-foreground: #17252A;
+  --popover: #FEFFFF;
+  --popover-foreground: #17252A;
+  --primary: #17252A;
+  --primary-foreground: #FEFFFF;
+  --secondary: #3AAFA9;
+  --secondary-foreground: #17252A;
+  --muted: #EAF7F6;
+  --muted-foreground: #2B7A78;
+  --accent: #3AAFA9;
+  --accent-foreground: #17252A;
+  --border: #B3E3DE;
+  --input: #B3E3DE;
+  --input-background: #FEFFFF;
+  --radius: 0.75rem;
+  --sidebar: #17252A;
+  --sidebar-foreground: #DEF2F1;
+  --sidebar-primary: #3AAFA9;
+  --sidebar-primary-foreground: #17252A;
+  --sidebar-accent: #2B7A78;
+  --sidebar-accent-foreground: #FEFFFF;
 }
 
 body {
@@ -97,12 +73,12 @@ body {
 }
 
 /* Crime Type Semantic Color Utilities */
-.crime-burglary { color: #F59E0B; border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.1); }
-.crime-chain-snatching { color: #EF4444; border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.1); }
-.crime-vehicle-theft { color: #A855F7; border-color: rgba(168, 85, 247, 0.4); background: rgba(168, 85, 247, 0.1); }
-.crime-theft { color: #F97316; border-color: rgba(249, 115, 22, 0.4); background: rgba(249, 115, 22, 0.1); }
-.crime-assault { color: #EC4899; border-color: rgba(236, 72, 153, 0.4); background: rgba(236, 72, 153, 0.1); }
-.crime-murder { color: #DC2626; border-color: rgba(220, 38, 38, 0.4); background: rgba(220, 38, 38, 0.1); }
+.crime-burglary { color: #2B7A78; border-color: rgba(43, 122, 120, 0.4); background: rgba(58, 175, 169, 0.12); }
+.crime-chain-snatching { color: #DC2626; border-color: rgba(220, 38, 38, 0.3); background: rgba(220, 38, 38, 0.08); }
+.crime-vehicle-theft { color: #2B7A78; border-color: rgba(43, 122, 120, 0.4); background: rgba(43, 122, 120, 0.12); }
+.crime-theft { color: #D97706; border-color: rgba(217, 119, 6, 0.3); background: rgba(217, 119, 6, 0.08); }
+.crime-assault { color: #DB2777; border-color: rgba(219, 39, 119, 0.3); background: rgba(219, 39, 119, 0.08); }
+.crime-murder { color: #B91C1C; border-color: rgba(185, 28, 28, 0.3); background: rgba(185, 28, 28, 0.08); }
 
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
@@ -113,9 +89,9 @@ body {
   background: var(--pramaan-bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--pramaan-panel);
+  background: #3AAFA9;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--pramaan-border-strong);
+  background: #2B7A78;
 }

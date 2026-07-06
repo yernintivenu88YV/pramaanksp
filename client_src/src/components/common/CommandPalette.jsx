@@ -102,38 +102,39 @@ export function CommandPalette({ isOpen, onClose, onSelectView, onNavigate }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-start justify-center pt-16 sm:pt-24 bg-black/75 backdrop-blur-md p-3 sm:p-4 animate-fade-in">
-      <div className="w-full max-w-2xl rounded-2xl border border-pramaan-border bg-pramaan-surface shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+    <div className="fixed inset-0 z-[2000] flex items-start justify-center pt-16 sm:pt-24 bg-[#17252A]/50 backdrop-blur-sm p-3 sm:p-4 font-sans select-none">
+      <div className="w-full max-w-2xl rounded-2xl border border-[#B3E3DE] bg-[#FEFFFF] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+        
         {/* Header Search Input */}
-        <div className="flex items-center gap-3 border-b border-pramaan-border px-4 py-3.5 bg-pramaan-elevated/70 shrink-0">
-          <Search size={18} className="text-pramaan-primary shrink-0 animate-pulse" />
+        <div className="flex items-center gap-3 border-b border-[#B3E3DE] px-4 py-3.5 bg-[#FEFFFF] shrink-0">
+          <Search size={18} className="text-[#2B7A78] shrink-0" />
           <input
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search FIR CrimeNo, suspect names, views, or commands (⌘K)..."
-            className="w-full bg-transparent text-sm font-sans text-pramaan-text outline-none placeholder:text-pramaan-text-secondary/70"
+            className="w-full bg-transparent text-xs sm:text-sm font-sans text-[#17252A] outline-none placeholder:text-[#2B7A78]/60 font-medium"
           />
           {query && (
-            <button onClick={() => setQuery('')} className="text-pramaan-text-secondary hover:text-pramaan-text p-1">
+            <button onClick={() => setQuery('')} className="text-[#2B7A78] hover:text-[#17252A] p-1 cursor-pointer">
               <X size={14} />
             </button>
           )}
-          <button onClick={onClose} className="rounded-md bg-pramaan-surface p-1 text-pramaan-text-secondary hover:text-pramaan-text border border-pramaan-border">
+          <button onClick={onClose} className="rounded-lg bg-[#DEF2F1] p-1.5 text-[#2B7A78] hover:text-[#17252A] border border-[#B3E3DE] cursor-pointer">
             <X size={16} />
           </button>
         </div>
 
         {/* Category Filter Pills Bar */}
-        <div className="flex items-center gap-1.5 border-b border-pramaan-border bg-pramaan-bg/60 px-4 py-2 overflow-x-auto shrink-0">
+        <div className="flex items-center gap-1.5 border-b border-[#B3E3DE] bg-[#DEF2F1] px-4 py-2 overflow-x-auto shrink-0">
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1 rounded-md text-xs font-mono font-semibold transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                 selectedCategory === cat
-                  ? 'bg-pramaan-primary text-pramaan-bg font-bold shadow-sm'
-                  : 'bg-pramaan-surface text-pramaan-text-secondary hover:text-pramaan-text border border-pramaan-border'
+                  ? 'bg-[#17252A] text-[#FEFFFF] shadow-sm'
+                  : 'bg-[#FEFFFF] text-[#2B7A78] hover:bg-[#B3E3DE]/30 border border-[#B3E3DE]'
               }`}
             >
               {cat}
@@ -142,12 +143,12 @@ export function CommandPalette({ isOpen, onClose, onSelectView, onNavigate }) {
         </div>
 
         {/* Results Scrollable List */}
-        <div ref={listRef} className="flex-1 overflow-y-auto p-2 space-y-1">
+        <div ref={listRef} className="flex-1 overflow-y-auto p-2 space-y-1 bg-[#FEFFFF]">
           {filtered.length === 0 ? (
-            <div className="p-10 text-center text-xs text-pramaan-text-secondary space-y-2">
-              <AlertTriangle size={24} className="mx-auto text-pramaan-warning/60" />
-              <p className="font-semibold text-pramaan-text">No matching intelligence records found</p>
-              <p className="text-[11px] text-pramaan-text-secondary">Try searching for "CASE-001", "Rafi", "Burglary", "Map", or "AI Assistant"</p>
+            <div className="p-10 text-center text-xs text-[#2B7A78] space-y-2">
+              <AlertTriangle size={24} className="mx-auto text-amber-500" />
+              <p className="font-bold text-[#17252A]">No matching intelligence records found</p>
+              <p className="text-[11px] text-[#2B7A78]">Try searching for "CASE-001", "Rafi", "Burglary", "Map", or "AI Assistant"</p>
             </div>
           ) : (
             filtered.map((item, idx) => {
@@ -160,39 +161,39 @@ export function CommandPalette({ isOpen, onClose, onSelectView, onNavigate }) {
                   onMouseEnter={() => setSelectedIndex(idx)}
                   className={`flex items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 transition-all cursor-pointer border ${
                     isSelected
-                      ? 'bg-pramaan-primary/20 border-pramaan-primary text-pramaan-text shadow-sm'
-                      : 'border-transparent text-pramaan-text-secondary hover:bg-pramaan-elevated hover:text-pramaan-text'
+                      ? 'bg-[#DEF2F1] border-[#3AAFA9] text-[#17252A] shadow-xs'
+                      : 'border-transparent text-[#2B7A78] hover:bg-[#DEF2F1]/50 hover:text-[#17252A]'
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border ${
-                      isSelected ? 'bg-pramaan-primary text-pramaan-bg border-pramaan-primary' : 'bg-pramaan-elevated border-pramaan-border text-pramaan-primary'
+                      isSelected ? 'bg-[#17252A] text-[#3AAFA9] border-[#17252A]' : 'bg-[#DEF2F1] border-[#B3E3DE] text-[#2B7A78]'
                     }`}>
                       <Icon size={18} />
                     </div>
                     <div className="min-w-0 space-y-0.5">
                       <div className="flex items-center gap-2">
-                        <span className={`font-bold text-xs truncate ${isSelected ? 'text-pramaan-primary font-bold' : 'text-pramaan-text'}`}>
+                        <span className={`font-bold text-xs truncate ${isSelected ? 'text-[#17252A]' : 'text-[#17252A]'}`}>
                           {item.title}
                         </span>
-                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase border ${
-                          item.badge === 'FIR' ? 'bg-amber-500/15 text-amber-400 border-amber-500/30' :
-                          item.badge === 'SUSPECT' ? 'bg-red-500/15 text-red-400 border-red-500/30' :
-                          item.badge === 'ACTION' ? 'bg-purple-500/15 text-purple-400 border-purple-500/30' :
-                          'bg-blue-500/15 text-blue-400 border-blue-500/30'
+                        <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase border ${
+                          item.badge === 'FIR' ? 'bg-amber-50 text-amber-700 border-amber-300' :
+                          item.badge === 'SUSPECT' ? 'bg-red-50 text-red-700 border-red-300' :
+                          item.badge === 'ACTION' ? 'bg-[#3AAFA9]/20 text-[#17252A] border-[#3AAFA9]/40' :
+                          'bg-[#DEF2F1] text-[#2B7A78] border-[#3AAFA9]/40'
                         }`}>
                           {item.badge}
                         </span>
                       </div>
-                      {item.sub && <p className="text-[11px] text-pramaan-text-secondary truncate">{item.sub}</p>}
+                      {item.sub && <p className="text-[11px] text-[#2B7A78] truncate">{item.sub}</p>}
                     </div>
                   </div>
 
                   <div className="flex items-center gap-1 shrink-0">
-                    <span className="text-[10px] font-mono font-semibold text-pramaan-text-secondary hidden sm:inline">
+                    <span className="text-[10px] font-mono font-bold text-[#2B7A78] hidden sm:inline">
                       Jump
                     </span>
-                    <ArrowRight size={12} className={isSelected ? 'text-pramaan-primary' : 'text-pramaan-text-secondary/50'} />
+                    <ArrowRight size={12} className={isSelected ? 'text-[#17252A]' : 'text-[#2B7A78]/50'} />
                   </div>
                 </div>
               );
@@ -201,20 +202,20 @@ export function CommandPalette({ isOpen, onClose, onSelectView, onNavigate }) {
         </div>
 
         {/* Footer Keybinding Hints Bar */}
-        <div className="border-t border-pramaan-border px-4 py-2.5 text-[11px] font-mono text-pramaan-text-secondary flex flex-wrap items-center justify-between gap-2 bg-pramaan-bg/90 shrink-0">
+        <div className="border-t border-[#B3E3DE] px-4 py-2.5 text-[11px] font-mono text-[#2B7A78] flex flex-wrap items-center justify-between gap-2 bg-[#DEF2F1] shrink-0">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
-              <kbd className="rounded bg-pramaan-surface border border-pramaan-border px-1.5 py-0.5 text-[10px]">↑↓</kbd> Navigate
+              <kbd className="rounded-md bg-[#FEFFFF] border border-[#B3E3DE] px-1.5 py-0.5 text-[10px] text-[#17252A] font-bold">↑↓</kbd> Navigate
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="rounded bg-pramaan-surface border border-pramaan-border px-1.5 py-0.5 text-[10px]">↵</kbd> Select
+              <kbd className="rounded-md bg-[#FEFFFF] border border-[#B3E3DE] px-1.5 py-0.5 text-[10px] text-[#17252A] font-bold">↵</kbd> Select
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="rounded bg-pramaan-surface border border-pramaan-border px-1.5 py-0.5 text-[10px]">Esc</kbd> Exit
+              <kbd className="rounded-md bg-[#FEFFFF] border border-[#B3E3DE] px-1.5 py-0.5 text-[10px] text-[#17252A] font-bold">Esc</kbd> Exit
             </span>
           </div>
 
-          <span className="text-pramaan-primary font-bold">Pramaan Omni-Search (⌘K)</span>
+          <span className="text-[#17252A] font-bold">Pramaan Omni-Search (⌘K)</span>
         </div>
       </div>
     </div>

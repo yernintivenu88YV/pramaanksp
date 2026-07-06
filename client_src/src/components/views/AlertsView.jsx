@@ -34,51 +34,56 @@ export default function AlertsView({ activeRole = 'ACP' }) {
   };
 
   return (
-    <div className="space-y-5 anim-content relative">
+    <div className="space-y-5 font-sans select-none relative">
       <WorkPanel
         eyebrow="Real-Time Signal Detection"
         title="Alert Stream & Priority Notifications"
         actions={
           <div className="flex items-center gap-3">
             <ModeBadge mode="live" />
-            <span className="text-xs font-mono text-pramaan-text-secondary">
+            <span className="text-xs font-mono font-bold text-[#2B7A78]">
               {filteredAlerts.length} active alerts
             </span>
           </div>
         }
       >
-        {/* Stat Filter Header */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+        {/* Stat Filter Header with Sidebar Active Animations */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-5">
           {[
-            { key: 'all', label: 'Total Alerts', count: totals.all, style: 'text-pramaan-text border-pramaan-border' },
-            { key: 'critical', label: 'Critical Severity', count: totals.critical, style: 'text-pramaan-critical border-pramaan-critical/30' },
-            { key: 'warning', label: 'Review Queue', count: totals.warning, style: 'text-pramaan-warning border-pramaan-warning/30' },
-            { key: 'info', label: 'Informational', count: totals.info, style: 'text-pramaan-info border-pramaan-info/30' },
-          ].map((item) => (
-            <button
-              key={item.key}
-              onClick={() => setSeverityFilter(item.key)}
-              className={`p-3 rounded-lg border bg-pramaan-elevated text-left transition-all cursor-pointer ${
-                severityFilter === item.key ? 'border-pramaan-secondary ring-1 ring-pramaan-secondary/40' : 'hover:border-pramaan-border-strong'
-              }`}
-            >
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-pramaan-text-secondary">{item.label}</div>
-              <div className={`text-xl font-mono font-bold mt-1 ${item.style}`}>{item.count}</div>
-            </button>
-          ))}
+            { key: 'all', label: 'Total Alerts', count: totals.all, style: 'text-[#17252A]' },
+            { key: 'critical', label: 'Critical Severity', count: totals.critical, style: 'text-red-600' },
+            { key: 'warning', label: 'Review Queue', count: totals.warning, style: 'text-amber-700' },
+            { key: 'info', label: 'Informational', count: totals.info, style: 'text-[#2B7A78]' },
+          ].map((item) => {
+            const isSelected = severityFilter === item.key;
+            return (
+              <button
+                key={item.key}
+                onClick={() => setSeverityFilter(item.key)}
+                className={`p-4 rounded-xl border text-left transition-all cursor-pointer active:scale-95 ${
+                  isSelected
+                    ? 'bg-[#2B7A78] text-white border-[#3AAFA9] shadow-md ring-1 ring-[#3AAFA9]/50 scale-[1.02]'
+                    : 'bg-[#FEFFFF] text-[#17252A] border-[#B3E3DE] hover:bg-[#DEF2F1]'
+                }`}
+              >
+                <div className={`text-[10px] font-mono font-bold uppercase tracking-wider ${isSelected ? 'text-[#3AAFA9]' : 'text-[#2B7A78]'}`}>{item.label}</div>
+                <div className={`text-2xl font-mono font-bold mt-1 ${isSelected ? 'text-white' : item.style}`}>{item.count}</div>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Filter Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg bg-pramaan-elevated border border-pramaan-border mb-4">
+        {/* Filter Controls Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-[#DEF2F1] border border-[#B3E3DE] mb-5">
           <div className="flex items-center gap-2">
-            <Filter size={14} className="text-pramaan-secondary" />
-            <span className="text-xs font-semibold text-pramaan-text">Filters:</span>
+            <Filter size={15} className="text-[#2B7A78]" />
+            <span className="text-xs font-bold text-[#17252A]">Filter Streams:</span>
           </div>
           <div className="flex items-center gap-3 flex-wrap text-xs">
             <select
               value={severityFilter}
               onChange={(e) => setSeverityFilter(e.target.value)}
-              className="bg-pramaan-surface text-pramaan-text border border-pramaan-border px-2.5 py-1 rounded-md text-xs font-mono outline-none cursor-pointer"
+              className="bg-[#FEFFFF] text-[#17252A] border border-[#B3E3DE] px-3 py-1.5 rounded-xl text-xs font-mono font-bold outline-none cursor-pointer"
             >
               <option value="all">Severity: All</option>
               <option value="critical">Critical</option>
@@ -89,7 +94,7 @@ export default function AlertsView({ activeRole = 'ACP' }) {
             <select
               value={crimeTypeFilter}
               onChange={(e) => setCrimeTypeFilter(e.target.value)}
-              className="bg-pramaan-surface text-pramaan-text border border-pramaan-border px-2.5 py-1 rounded-md text-xs font-mono outline-none cursor-pointer"
+              className="bg-[#FEFFFF] text-[#17252A] border border-[#B3E3DE] px-3 py-1.5 rounded-xl text-xs font-mono font-bold outline-none cursor-pointer"
             >
               <option value="all">Crime Type: All</option>
               <option value="Burglary">Burglary</option>
@@ -103,7 +108,7 @@ export default function AlertsView({ activeRole = 'ACP' }) {
         {/* Alert Stream List */}
         <div className="space-y-3">
           {filteredAlerts.length === 0 ? (
-            <div className="py-12 text-center text-xs text-pramaan-text-secondary">
+            <div className="py-12 text-center text-xs text-[#2B7A78]">
               No alerts match the selected severity and type filter.
             </div>
           ) : (
@@ -115,53 +120,53 @@ export default function AlertsView({ activeRole = 'ACP' }) {
                 <div
                   key={alert.id}
                   onClick={() => setSelectedAlert(alert)}
-                  className={`p-4 rounded-lg border bg-pramaan-elevated transition-all cursor-pointer flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:border-pramaan-secondary/40 ${
-                    alert.acknowledged ? 'opacity-70 border-pramaan-border' : isCritical ? 'border-pramaan-critical/40 bg-pramaan-critical/5' : 'border-pramaan-border'
+                  className={`p-4 rounded-2xl border bg-[#FEFFFF] transition-all cursor-pointer flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:border-[#3AAFA9] shadow-xs ${
+                    alert.acknowledged ? 'opacity-70 border-[#B3E3DE]' : isCritical ? 'border-red-300 bg-red-50/50' : 'border-[#B3E3DE]'
                   }`}
                 >
-                  <div className="flex items-start gap-3 min-w-0 flex-1">
+                  <div className="flex items-start gap-3.5 min-w-0 flex-1">
                     <div
-                      className={`p-2 rounded-lg shrink-0 mt-0.5 ${
+                      className={`p-2.5 rounded-xl shrink-0 mt-0.5 border ${
                         isCritical
-                          ? 'bg-pramaan-critical/15 text-pramaan-critical'
+                          ? 'bg-red-50 text-red-600 border-red-200'
                           : isWarning
-                          ? 'bg-pramaan-warning/15 text-pramaan-warning'
-                          : 'bg-pramaan-info/15 text-pramaan-info'
+                          ? 'bg-amber-50 text-amber-700 border-amber-200'
+                          : 'bg-[#DEF2F1] text-[#2B7A78] border-[#3AAFA9]/30'
                       }`}
                     >
-                      <ShieldAlert size={18} />
+                      <ShieldAlert size={20} />
                     </div>
 
                     <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
+                          className={`px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase border ${
                             isCritical
-                              ? 'bg-pramaan-critical/20 text-pramaan-critical border border-pramaan-critical/30'
+                              ? 'bg-red-50 text-red-700 border-red-300'
                               : isWarning
-                              ? 'bg-pramaan-warning/20 text-pramaan-warning border border-pramaan-warning/30'
-                              : 'bg-pramaan-info/20 text-pramaan-info border border-pramaan-info/30'
+                              ? 'bg-amber-50 text-amber-800 border-amber-300'
+                              : 'bg-[#DEF2F1] text-[#2B7A78] border-[#3AAFA9]/40'
                           }`}
                         >
                           {alert.severity}
                         </span>
                         {alert.caseId && <Cite id={alert.caseId} />}
-                        <span className="text-[11px] font-mono text-pramaan-text-secondary flex items-center gap-1">
-                          <Clock size={11} /> {alert.time}
+                        <span className="text-[11px] font-mono text-[#2B7A78] flex items-center gap-1">
+                          <Clock size={12} /> {alert.time}
                         </span>
                         {alert.acknowledged && (
-                          <span className="text-[10px] font-mono text-pramaan-success bg-pramaan-success/15 px-1.5 py-0.5 rounded border border-pramaan-success/30 flex items-center gap-1">
-                            <CheckCircle2 size={10} /> Acked by {alert.acknowledgedBy}
+                          <span className="text-[10px] font-mono text-[#2B7A78] bg-[#DEF2F1] px-2 py-0.5 rounded-md border border-[#3AAFA9]/40 flex items-center gap-1 font-bold">
+                            <CheckCircle2 size={11} className="text-[#3AAFA9]" /> Acked by {alert.acknowledgedBy}
                           </span>
                         )}
                       </div>
 
-                      <h4 className="text-xs sm:text-sm font-bold text-pramaan-text truncate">{alert.title}</h4>
-                      <p className="text-xs text-pramaan-text-secondary line-clamp-1">{alert.detail}</p>
+                      <h4 className="text-xs sm:text-sm font-extrabold text-[#17252A] truncate">{alert.title}</h4>
+                      <p className="text-xs text-[#2B7A78] line-clamp-1">{alert.detail}</p>
                     </div>
                   </div>
 
-                  <ChevronRight size={16} className="text-pramaan-text-secondary opacity-60 shrink-0 hidden sm:block" />
+                  <ChevronRight size={16} className="text-[#2B7A78] shrink-0 hidden sm:block" />
                 </div>
               );
             })
@@ -171,16 +176,16 @@ export default function AlertsView({ activeRole = 'ACP' }) {
 
       {/* Slide-over Detail Drawer */}
       {selectedAlert && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs anim-content">
-          <div className="w-full max-w-md bg-pramaan-surface border-l border-pramaan-border h-full p-6 overflow-y-auto flex flex-col justify-between">
+        <div className="fixed inset-0 z-50 flex justify-end bg-[#17252A]/50 backdrop-blur-xs">
+          <div className="w-full max-w-md bg-[#FEFFFF] border-l border-[#B3E3DE] h-full p-6 overflow-y-auto flex flex-col justify-between shadow-2xl">
             <div className="space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-pramaan-border">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-pramaan-secondary">
+              <div className="flex items-center justify-between pb-3 border-b border-[#B3E3DE]">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#2B7A78]">
                   Alert Details & Context
                 </span>
                 <button
                   onClick={() => setSelectedAlert(null)}
-                  className="p-1 text-pramaan-text-secondary hover:text-pramaan-text cursor-pointer"
+                  className="p-1 rounded-lg text-[#2B7A78] hover:text-[#17252A] hover:bg-[#DEF2F1] cursor-pointer"
                 >
                   <X size={18} />
                 </button>
@@ -189,48 +194,48 @@ export default function AlertsView({ activeRole = 'ACP' }) {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <span
-                    className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
+                    className={`px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase ${
                       selectedAlert.severity === 'critical'
-                        ? 'bg-pramaan-critical/20 text-pramaan-critical border border-pramaan-critical/30'
-                        : 'bg-pramaan-warning/20 text-pramaan-warning border border-pramaan-warning/30'
+                        ? 'bg-red-50 text-red-700 border border-red-300'
+                        : 'bg-amber-50 text-amber-800 border border-amber-300'
                     }`}
                   >
                     {selectedAlert.severity}
                   </span>
-                  <span className="text-xs font-mono text-pramaan-text-secondary">{selectedAlert.time}</span>
+                  <span className="text-xs font-mono text-[#2B7A78]">{selectedAlert.time}</span>
                 </div>
 
-                <h3 className="text-base font-bold text-pramaan-text">{selectedAlert.title}</h3>
-                <p className="text-xs text-pramaan-text-secondary leading-relaxed">{selectedAlert.detail}</p>
+                <h3 className="text-base font-extrabold text-[#17252A]">{selectedAlert.title}</h3>
+                <p className="text-xs text-[#2B7A78] leading-relaxed font-medium">{selectedAlert.detail}</p>
               </div>
 
               {/* Context Box */}
-              <div className="p-4 rounded-lg bg-pramaan-elevated border border-pramaan-border space-y-2">
-                <div className="text-[10px] font-mono font-semibold uppercase text-pramaan-secondary">
+              <div className="p-4 rounded-xl bg-[#DEF2F1] border border-[#B3E3DE] space-y-2">
+                <div className="text-[10px] font-mono font-bold uppercase text-[#2B7A78]">
                   Triggering Evidence Context
                 </div>
-                <div className="text-xs text-pramaan-text font-mono flex items-center justify-between">
+                <div className="text-xs text-[#17252A] font-mono flex items-center justify-between">
                   <span>Case Reference:</span>
                   <Cite id={selectedAlert.caseId || 'FIR-2024-8841'} />
                 </div>
-                <div className="text-xs text-pramaan-text font-mono flex items-center justify-between">
+                <div className="text-xs text-[#17252A] font-mono flex items-center justify-between">
                   <span>Station Jurisdiction:</span>
-                  <span className="text-pramaan-text-secondary">Bengaluru Central</span>
+                  <span className="text-[#2B7A78] font-bold">Bengaluru Central</span>
                 </div>
               </div>
             </div>
 
-            {/* Actions Footer */}
-            <div className="pt-4 border-t border-pramaan-border space-y-2">
+            {/* Actions Footer with Active Button Style */}
+            <div className="pt-4 border-t border-[#B3E3DE] space-y-2">
               {!selectedAlert.acknowledged ? (
                 <button
                   onClick={() => handleAcknowledge(selectedAlert.id)}
-                  className="w-full py-2.5 rounded-lg bg-pramaan-primary text-xs font-bold text-pramaan-bg hover:bg-pramaan-primary-cyan transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-3 rounded-xl bg-[#17252A] hover:bg-[#2B7A78] text-[#FEFFFF] text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                 >
-                  <CheckCircle2 size={15} /> Acknowledge Alert ({activeRole})
+                  <CheckCircle2 size={16} className="text-[#3AAFA9]" /> Acknowledge Alert ({activeRole})
                 </button>
               ) : (
-                <div className="p-2.5 rounded-lg bg-pramaan-success/15 border border-pramaan-success/30 text-center text-xs font-bold text-pramaan-success">
+                <div className="p-3 rounded-xl bg-[#DEF2F1] border border-[#3AAFA9]/40 text-center text-xs font-bold text-[#17252A]">
                   ✓ Acknowledged by {selectedAlert.acknowledgedBy}
                 </div>
               )}
