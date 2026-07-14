@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "targets": [
+      "entity_resolution_fn"
+    ],
+    "ignore": [],
+    "source": "functions"
+  },
+  "client": {
+    "source": "client"
+  }
+}
