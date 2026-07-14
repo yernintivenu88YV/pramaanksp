@@ -1,0 +1,3 @@
+[36m[1m[36mi[39m[36m[22m [39m[1mcatalyst.json[22m file has been successfully updated with functions details.
+
+[32m[1m[32m√[39m[32m[22m [39mCatalyst functions add complete!
