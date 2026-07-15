@@ -47,6 +47,12 @@ Ranks candidate cases against a target case using a blended similarity score acr
 * **Confirmed Suspect Linkages (Separated Signal)**:
   Any candidate case sharing a confirmed canonical suspect (established via Entity Resolution) is flagged separately. They are not blended into the overall similarity score, ensuring that critical links do not get buried in cases that merely look similar.
 
+### Role-Based Access Control & Auditing (`gateway_fn`)
+Implements a default-deny permission layer that restricts resources based on provisioned roles:
+* **SI / ACP**: Possess `own_case_detail` permissions, allowing access to individual suspect profiles and case matches.
+* **Analyst / Policy**: Denied `own_case_detail` permissions; restricted only to trend rollups and aggregates.
+* **Auditing**: Log every access query and permission decision directly to a dedicated `AccessAuditLog` table in the Catalyst Data Store.
+
 ---
 
 ## 3. Work Done
@@ -67,8 +73,17 @@ Ranks candidate cases against a target case using a blended similarity score acr
    * Added `schemas.py` in `case_twin_fn/` defining `CaseRecordInput` and `MatchRequest` to validate incoming target and candidate case records.
    * Added `ingestion.py` for input parsing.
 4. **HTTP Routing Layer**: Modified the Flask handler in `main.py` to support `POST /match` (to calculate top-$K$ similarity twins and flagged shared suspect connections) and `GET /health` endpoints.
-5. **Dependency Management**: Installed dependencies (`scikit-learn`, `rapidfuzz`, `pydantic`) locally and verified logic parity by running `test_case_twin.py` (which correctly ranks `CASE-002` first, `CASE-003` second, and flags `CASE-005` separately).
+5. **Dependency Management**: Installed dependencies (`scikit-learn`, `rapidfuzz`, `pydantic`) locally and verified logic parity by running `test_case_twin.py`.
 6. **Local Server Testing**: Ran `catalyst serve` and verified response payload shapes using PowerShell requests.
+
+### Task 3: RBAC Gateway and React Client Integration
+1. **Scaffold creation**: Programmatically generated the third function target `gateway_fn` (Python 3.12, Advanced I/O).
+2. **Logic Migration**: Moved `rbac.py` and `test_rbac.py` from `prototype/` to `functions/gateway_fn/`.
+3. **Access Controls wiring**: Configured Flask handler `main.py` in `gateway_fn` to pull roles strictly from the authenticated session context (`get_current_user()`). Failed all unauthenticated or invalid roles closed.
+4. **Dedicated Auditing**: Created and configured the `AccessAuditLog` table structure in the SQL schema file and inserted a row for every allow/deny check.
+5. **Microservice protection**: Added a pre-authorization HTTP check inside `entity_resolution_fn/main.py` and `case_twin_fn/main.py` querying `/check_access` for the `own_case_detail` resource before returning any data.
+6. **React Web Client Build System**: Set up a Node React client project in `client_src/` compiling to `client/` using Vite with React.
+7. **Verification**: Executed `test_rbac.py` asserting all 28 negative tests passed. Verified local server startup and validated health check responses of all three endpoints.
 
 ---
 
@@ -80,7 +95,8 @@ Ranks candidate cases against a target case using a blended similarity score acr
 5. **Incorrect Runtime Selection**: Selecting `python312` failed with a "Selected runtime is invalid" error.
 6. **Port Conflicts**: Investigating ports showed port `8080` was already occupied by an Oracle Database Express Edition (XE) listener rather than the Catalyst server.
 7. **Functions Plurality in functions:add**: Attempting to run `catalyst function:add` failed because the actual command in zcatalyst-cli is `functions:add` (plural).
-8. **Startup Latency for Heavy Python Libraries**: Spawning the catalyst server locally with scikit-learn included caused the master server port check to time out or take up to 20-30 seconds to start listening, which initially appeared as a hang.
+8. **Startup Latency for Heavy Python Libraries**: Spawning the catalyst server locally with scikit-learn included caused the master server port check to time out or take up to 20-30 seconds to start listening.
+9. **Pip install during catalyst serve**: Every time a new function target is introduced, `catalyst serve` automatically executes a local `pip install -r requirements.txt -t . --upgrade` inside the target directory, causing initial startup times to extend by several minutes while wheels compile.
 
 ---
 
@@ -94,6 +110,6 @@ Ranks candidate cases against a target case using a blended similarity score acr
    * Created a JavaScript `Proxy` getter on the `name` property to handle sequential prompts named `name` differently (returning `entity_resolution_fn` for the function and `client_app` for the client name).
 4. **Source Code Inspection & Target Mapping**:
    * Inspected the CLI's `init/util/common.js` and `init/util/client.js` to determine how checkbox and list selections are mapped.
-   * Discovered that features selection uses choice names as IDs (e.g. `'Functions: Configure and deploy http/non-http functions'`), and the python runtime in the India DC is registered as `'python_3_12'` (not `python312`).
+   * Discovered that features selection uses choice names as IDs, and the python runtime in the India DC is registered as `'python_3_12'`.
 5. **Net TCP Connection Check**: Used Powershell's `Get-NetTCPConnection` to check which process IDs own which listening ports. Discovered that the Catalyst server was listening on `127.0.0.1:3000` while the internal Flask python runtimes were spawned on `127.0.0.1:4000` and `4001`.
 6. **Extended Startup Waiting**: Increased async timeout wait durations when starting `catalyst serve` to allow scikit-learn to import and populate the internal ports before invoking HTTP tests.

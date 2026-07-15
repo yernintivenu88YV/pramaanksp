@@ -105,3 +105,13 @@ CREATE TABLE ConversationLog (
     timestamp               TIMESTAMP NOT NULL,
     PRIMARY KEY (session_id, timestamp)
 );
+
+CREATE TABLE AccessAuditLog (
+    log_id                 VARCHAR(40) PRIMARY KEY,  -- Auto-generated ROWID
+    session_id             VARCHAR(40) NOT NULL,
+    role                   VARCHAR(20) NOT NULL,
+    resource               VARCHAR(50) NOT NULL,
+    decision               VARCHAR(10) NOT NULL,     -- allow | deny
+    timestamp              TIMESTAMP NOT NULL
+);
+

@@ -2,7 +2,8 @@
   "functions": {
     "targets": [
       "entity_resolution_fn",
-      "case_twin_fn"
+      "case_twin_fn",
+      "gateway_fn"
     ],
     "ignore": [],
     "source": "functions"

@@ -1,1 +1,1 @@
-// YOUR JAVASCRIPT CODE FOR INDEX.HTML GOES HERE
+console.log("Pramaan client app initialized.");
