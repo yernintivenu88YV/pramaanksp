@@ -32,6 +32,12 @@ export default function App() {
   const [ctResult, setCtResult] = useState(null)
   const [ctError, setCtError] = useState(null)
 
+  // Intent Router state
+  const [irQuery, setIrQuery] = useState('Find similar burglary cases to CASE-001')
+  const [irResult, setIrResult] = useState(null)
+  const [irError, setIrError] = useState(null)
+  const [irPending, setIrPending] = useState(false)
+
   // Target case (CASE-001)
   const targetCase = {
     case_id: "CASE-001",
@@ -183,6 +189,33 @@ export default function App() {
       })
   }
 
+  const runIntentRoute = () => {
+    setIrResult(null)
+    setIrError(null)
+    setIrPending(true)
+
+    fetch('/server/intent_router_fn/route', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ query: irQuery })
+    })
+      .then(async resp => {
+        const data = await resp.json()
+        setIrPending(false)
+        if (resp.status === 200) {
+          setIrResult(data)
+        } else {
+          setIrError(data.error || `HTTP Error ${resp.status}`)
+        }
+      })
+      .catch(err => {
+        setIrPending(false)
+        setIrError(err.message || 'Network error')
+      })
+  }
+
   if (loading) {
     return <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>Loading Catalyst Application...</div>
   }
@@ -259,6 +292,21 @@ export default function App() {
           }}
         >
           Entity Resolution
+        </button>
+        <button 
+          onClick={() => setActiveTab('intent_router')} 
+          style={{
+            padding: '10px 20px',
+            border: 'none',
+            borderBottom: activeTab === 'intent_router' ? '3px solid #2563eb' : 'none',
+            background: activeTab === 'intent_router' ? '#eff6ff' : '#f3f4f6',
+            color: activeTab === 'intent_router' ? '#1e40af' : '#4b5563',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            borderRadius: '4px 4px 0 0'
+          }}
+        >
+          Intent Router (NL Search)
         </button>
       </div>
 
@@ -412,6 +460,93 @@ export default function App() {
                   <li key={idx}>{line}</li>
                 ))}
               </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Intent Router panel */}
+      {activeTab === 'intent_router' && (
+        <div style={{ border: '1px solid #ddd', padding: '20px', borderRadius: '0 0 8px 8px' }}>
+          <h2>Conversational Intent Query Router</h2>
+          <p style={{ color: '#555' }}>Enter a natural language query in English, Kannada, or code-mixed. The LLM will classify the intent and forward parameters to the correct target engine.</p>
+
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Query Box:</label>
+            <textarea
+              value={irQuery}
+              onChange={e => setIrQuery(e.target.value)}
+              rows="3"
+              style={{ width: '100%', padding: '10px', fontSize: '15px', borderRadius: '6px', border: '1px solid #ccc' }}
+              placeholder="e.g. Find similar burglary cases to CASE-001"
+            />
+            <div style={{ marginTop: '8px', fontSize: '13px', color: '#666' }}>
+              Suggestions: <br />
+              • <em>Find similar burglary cases to CASE-001</em> <br />
+              • <em>Resolve identities for Mohammed Rafi (phone 9845012345) and Mohammad Rafi (Malleshwaram)</em> <br />
+              • <em>Who is linked to suspect CANON-0042?</em>
+            </div>
+          </div>
+
+          <button 
+            onClick={runIntentRoute} 
+            disabled={irPending}
+            style={{ 
+              padding: '10px 20px', 
+              background: irPending ? '#93c5fd' : '#2563eb', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '4px', 
+              cursor: irPending ? 'not-allowed' : 'pointer', 
+              fontWeight: 'bold' 
+            }}
+          >
+            {irPending ? 'Analyzing Query...' : 'Send Query'}
+          </button>
+
+          {/* Error Feedback */}
+          {irError && (
+            <div style={{ marginTop: '20px', padding: '15px', background: '#fee2e2', border: '1px solid #f87171', color: '#991b1b', borderRadius: '6px' }}>
+              <h3>Access Denied / Routing Failed</h3>
+              <p>{irError}</p>
+            </div>
+          )}
+
+          {/* Results Feedback */}
+          {irResult && (
+            <div style={{ marginTop: '20px', padding: '15px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px' }}>
+              <h3>Routing Decisions & Classification Output</h3>
+              <p><strong>Detected Intent:</strong> <span style={{
+                background: '#dcfce7',
+                color: '#166534',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                fontWeight: 'bold'
+              }}>{irResult.intent}</span></p>
+              
+              <div style={{ background: '#f8fafc', padding: '10px', borderRadius: '4px', border: '1px solid #e2e8f0', marginTop: '10px' }}>
+                <strong>LLM Structured Parameters:</strong>
+                <pre style={{ margin: '5px 0 0 0', background: '#1e293b', color: '#f8fafc', padding: '10px', borderRadius: '4px', fontSize: '13px' }}>
+                  {JSON.stringify(irResult.classification, null, 2)}
+                </pre>
+              </div>
+
+              {/* Render routed response */}
+              {irResult.response && (
+                <div style={{ marginTop: '15px' }}>
+                  <strong>Routed Endpoint Response:</strong>
+                  <pre style={{ margin: '5px 0 0 0', background: '#0f172a', color: '#38bdf8', padding: '10px', borderRadius: '4px', fontSize: '13px' }}>
+                    {JSON.stringify(irResult.response, null, 2)}
+                  </pre>
+                </div>
+              )}
+
+              {/* Stub Message for Graph */}
+              {irResult.message && (
+                <div style={{ marginTop: '15px', background: '#fffbeb', border: '1px solid #fef3c7', padding: '10px', borderRadius: '4px', color: '#92400e' }}>
+                  ℹ️ {irResult.message}
+                </div>
+              )}
             </div>
           )}
         </div>
