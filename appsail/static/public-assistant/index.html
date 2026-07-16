@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KSP Public Help Desk — Sahaaya</title>
+  <!--
+    ============================================================================
+    Pramaan :: PUBLIC PUBLIC-FACING assistant  ("Sahaaya")
+    ============================================================================
+    ISOLATION CONTRACT (enforced by test_isolation.py in this folder):
+
+      This page is a GENUINELY SEPARATE, UNAUTHENTICATED path. It is NOT the
+      investigator interface. The authenticated investigator UI is the custom
+      React client (client_src/src/App.jsx) and stays exactly as built.
+
+      This file MUST NOT, ever:
+        - call gateway_fn / entity_resolution_fn / case_twin_fn / graph_fn /
+          intent_router_fn (or any /server/ endpoint)
+        - read case data, personal data, or the logged-in user's identity
+        - use window.catalyst / catalyst.auth
+        - fetch() / XMLHttpRequest / WebSocket to any Pramaan backend
+
+      Everything it "knows" is static procedural content hardcoded below.
+      ConvoKraft (Catalyst's chatbot service) is English-only in its NLU and
+      its bots are unauthenticated by design -- which is exactly why it is the
+      RIGHT tool HERE (public FAQ) and the WRONG tool for anything touching case
+      data. The bot embed placeholder is at the bottom; even with the real bot
+      wired in, its scope is this same static content.
+    ============================================================================
+  -->
+  <style>
+    :root { --navy:#0f2a4a; --blue:#2563eb; --ink:#1f2937; --muted:#6b7280;
+            --line:#e5e7eb; --bg:#f6f8fb; --card:#ffffff; --accent:#eef2ff; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, "Segoe UI", Roboto, "Noto Sans Kannada", sans-serif;
+           color: var(--ink); background: var(--bg); line-height:1.5; }
+    header { background: var(--navy); color:#fff; padding: 18px 20px; }
+    header h1 { margin:0; font-size: 20px; }
+    header p { margin: 4px 0 0; color:#c7d2fe; font-size: 13px; }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 20px; }
+    .banner { background:#fffbeb; border:1px solid #fcd34d; color:#92400e;
+              padding:12px 14px; border-radius:8px; font-size:13px; margin-bottom:20px; }
+    .grid { display:grid; grid-template-columns: 1fr; gap:16px; }
+    @media (min-width:720px){ .grid { grid-template-columns: 1fr 1fr; } }
+    .card { background: var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; }
+    .card h2 { margin:0 0 10px; font-size:16px; color:var(--navy); }
+    .kn { color: var(--muted); font-size: 13px; }
+    ol, ul { margin:8px 0 0; padding-left:20px; }
+    li { margin: 4px 0; }
+    .emergency { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+    .pill { background:var(--accent); color:#3730a3; border-radius:999px; padding:4px 10px; font-size:13px; font-weight:600; }
+    input[type=text]{ width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:8px; font-size:14px; }
+    table { width:100%; border-collapse:collapse; margin-top:10px; font-size:13px; }
+    th,td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); }
+    th { color: var(--muted); font-weight:600; }
+    .full { grid-column: 1 / -1; }
+    .chat { border:1px solid var(--line); border-radius:8px; padding:10px; background:#fafafa; }
+    .chat-log { min-height: 60px; font-size:14px; white-space:pre-wrap; }
+    .chat-row { display:flex; gap:8px; margin-top:8px; }
+    button { background: var(--blue); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-weight:600; cursor:pointer; }
+    footer { color: var(--muted); font-size:12px; text-align:center; padding:24px; }
+    a { color: var(--blue); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Karnataka State Police — Public Help Desk</h1>
+    <p>Sahaaya · ಸಹಾಯ — general public information · no login required</p>
+  </header>
+
+  <div class="wrap">
+    <div class="banner">
+      This is a public information desk. It shares only general procedural guidance
+      and never accesses case records, personal data, or any investigation system.
+      For emergencies dial <strong>112</strong>.
+      <span class="kn"> · ಇದು ಸಾರ್ವಜನಿಕ ಮಾಹಿತಿ ಕೇಂದ್ರ. ಯಾವುದೇ ಪ್ರಕರಣ ಮಾಹಿತಿಯನ್ನು ಪಡೆಯುವುದಿಲ್ಲ.</span>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>File a Complaint <span class="kn">/ ದೂರು ದಾಖಲಿಸುವುದು</span></h2>
+        <ol>
+          <li>Visit your jurisdictional police station, or use the Karnataka State
+              Police public portal for an online complaint / e-FIR where available.</li>
+          <li>Carry a valid photo ID and, if any, documents related to the incident.</li>
+          <li>Clearly state what happened, where, and when. Ask for the complaint /
+              FIR number before you leave.</li>
+          <li>For a cognizable offence the station must register an FIR; you are
+              entitled to a free copy of it.</li>
+          <li>If a station declines to register, you may approach the jurisdictional
+              senior officer (ACP / DCP) or the Superintendent of Police.</li>
+        </ol>
+        <p class="kn">ಹತ್ತಿರದ ಠಾಣೆಗೆ ಭೇಟಿ ನೀಡಿ ಅಥವಾ ಆನ್‌ಲೈನ್ ದೂರು ಸಲ್ಲಿಸಿ; ಎಫ್‌ಐಆರ್ ಸಂಖ್ಯೆ ಪಡೆಯಿರಿ.</p>
+      </div>
+
+      <div class="card">
+        <h2>Emergency &amp; Helplines <span class="kn">/ ತುರ್ತು ಸಂಖ್ಯೆಗಳು</span></h2>
+        <div class="emergency">
+          <span class="pill">Emergency 112</span>
+          <span class="pill">Police 100</span>
+          <span class="pill">Women 1091</span>
+          <span class="pill">Child 1098</span>
+          <span class="pill">Ambulance 108</span>
+          <span class="pill">Cyber-fraud 1930</span>
+          <span class="pill">Traffic 103</span>
+        </div>
+        <p class="kn" style="margin-top:10px">ತುರ್ತು ಸಂದರ್ಭದಲ್ಲಿ 112 ಗೆ ಕರೆ ಮಾಡಿ. ಸೈಬರ್ ವಂಚನೆ: 1930.</p>
+      </div>
+
+      <div class="card full">
+        <h2>Station Locator <span class="kn">/ ಠಾಣೆ ಹುಡುಕಿ</span></h2>
+        <input type="text" id="stationFilter" placeholder="Type an area, e.g. Koramangala / ಪ್ರದೇಶ ಹೆಸರು ನಮೂದಿಸಿ" />
+        <table id="stationTable">
+          <thead><tr><th>Area</th><th>Station</th><th>Contact</th></tr></thead>
+          <tbody>
+            <!-- Static sample directory. Replace/extend with the official station list. -->
+            <tr><td>Koramangala</td><td>Koramangala Police Station</td><td>080-2553-0000</td></tr>
+            <tr><td>Indiranagar</td><td>Indiranagar Police Station</td><td>080-2521-0000</td></tr>
+            <tr><td>Malleshwaram</td><td>Malleshwaram Police Station</td><td>080-2334-0000</td></tr>
+            <tr><td>Jayanagar</td><td>Jayanagar Police Station</td><td>080-2663-0000</td></tr>
+            <tr><td>Whitefield</td><td>Whitefield Police Station</td><td>080-2845-0000</td></tr>
+            <tr><td>Mysuru</td><td>Devaraja Police Station</td><td>0821-244-0000</td></tr>
+          </tbody>
+        </table>
+        <p class="kn" id="noRows" style="display:none">ಯಾವುದೇ ಠಾಣೆ ಕಂಡುಬಂದಿಲ್ಲ. ಬೇರೆ ಪ್ರದೇಶ ಪ್ರಯತ್ನಿಸಿ.</p>
+      </div>
+
+      <div class="card full">
+        <h2>Ask Sahaaya <span class="kn">/ ಸಹಾಯ ಸಹಾಯಕ</span></h2>
+        <p class="kn">General questions only (complaint steps, helplines, stations). This assistant cannot look up any case.</p>
+        <div class="chat">
+          <div class="chat-log" id="chatLog">Namaste 🙏  Ask me about filing a complaint, helpline numbers, or finding a station.</div>
+          <div class="chat-row">
+            <input type="text" id="chatInput" placeholder="e.g. How do I file a complaint?" />
+            <button id="chatSend" type="button">Ask</button>
+          </div>
+        </div>
+        <!--
+          ConvoKraft embed placeholder.
+          To wire the real bot, paste the console-generated ConvoKraft snippet here.
+          Its bot flows must stay scoped to this page's static FAQ (see setup doc).
+          The local, offline fallback below answers from a static map only -- it makes
+          NO network calls, by design, so isolation holds even before the bot exists.
+          <script src="https://<your-domain>/baas/v1/.../convokraft.js"></script>
+        -->
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Karnataka State Police · Public Help Desk. Static informational content.
+    For official procedures always confirm with your jurisdictional station.
+  </footer>
+
+  <script>
+    // ------------------------------------------------------------------
+    // 100% client-side. No fetch/XHR/WebSocket. No Pramaan backend. No auth.
+    // ------------------------------------------------------------------
+
+    // Station locator: pure client-side filter over the static table above.
+    (function () {
+      var input = document.getElementById('stationFilter');
+      var rows = Array.prototype.slice.call(
+        document.querySelectorAll('#stationTable tbody tr'));
+      var none = document.getElementById('noRows');
+      input.addEventListener('input', function () {
+        var q = input.value.trim().toLowerCase();
+        var shown = 0;
+        rows.forEach(function (r) {
+          var match = r.textContent.toLowerCase().indexOf(q) !== -1;
+          r.style.display = match ? '' : 'none';
+          if (match) shown++;
+        });
+        none.style.display = shown === 0 ? '' : 'none';
+      });
+    })();
+
+    // Offline FAQ fallback: static keyword -> answer map. No network, ever.
+    (function () {
+      var FAQ = [
+        { k: ['complaint','file','fir','ದೂರು','ಎಫ್‌ಐಆರ್'],
+          a: 'To file a complaint: visit your jurisdictional station (or the KSP online portal), carry a photo ID, describe the incident clearly, and get your FIR/complaint number before leaving. A free FIR copy is your right.' },
+        { k: ['emergency','help','number','helpline','ತುರ್ತು','ಸಂಖ್ಯೆ'],
+          a: 'Emergency 112 · Police 100 · Women 1091 · Child 1098 · Ambulance 108 · Cyber-fraud 1930 · Traffic 103.' },
+        { k: ['cyber','fraud','online','money','ಸೈಬರ್','ವಂಚನೆ'],
+          a: 'For online/financial fraud call 1930 immediately (the sooner, the better chance of freezing the transaction) and report at cybercrime.gov.in.' },
+        { k: ['station','locate','near','ಠಾಣೆ','ಹತ್ತಿರ'],
+          a: 'Use the Station Locator above — type your area to see the station and contact number.' },
+        { k: ['women','harassment','1091','ಮಹಿಳಾ','ಮಹಿಳೆ'],
+          a: 'Women in distress can call the Women Helpline 1091 or the unified emergency 112 at any time.' }
+      ];
+      function answer(q) {
+        var s = q.toLowerCase();
+        for (var i = 0; i < FAQ.length; i++) {
+          for (var j = 0; j < FAQ[i].k.length; j++) {
+            if (s.indexOf(FAQ[i].k[j].toLowerCase()) !== -1) return FAQ[i].a;
+          }
+        }
+        return "I can help with: filing a complaint, helpline numbers, cyber-fraud, women's helpline, and finding a station. For anything case-specific, please contact your station directly.";
+      }
+      var log = document.getElementById('chatLog');
+      var input = document.getElementById('chatInput');
+      var send = document.getElementById('chatSend');
+      function submit() {
+        var q = input.value.trim();
+        if (!q) return;
+        log.textContent = 'You: ' + q + '\n\nSahaaya: ' + answer(q);
+        input.value = '';
+      }
+      send.addEventListener('click', submit);
+      input.addEventListener('keydown', function (e) { if (e.key === 'Enter') submit(); });
+    })();
+  </script>
+</body>
+</html>
