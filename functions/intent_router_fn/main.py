@@ -111,7 +111,7 @@ SEED_CASES = {
     }
 }
 
-def fetch_case_data(app, case_id: str) -> dict:
+def fetch_case_data(app, case_id: str) -> tuple:
     # 1. Attempt database lookup
     try:
         zcql = app.zcql()
@@ -134,14 +134,14 @@ def fetch_case_data(app, case_id: str) -> dict:
                 "date_time": case_info.get("date_time"),
                 "weapon": case_info.get("weapon"),
                 "canonical_suspect_ids": suspects
-            }
+            }, "live"
     except Exception as e:
         logger.error(f"Database query failed for case {case_id}: {e}")
     
     # 2. Fallback to seed data
-    return SEED_CASES.get(case_id)
+    return SEED_CASES.get(case_id), "seed_fallback"
 
-def fetch_all_other_cases(app, target_id: str) -> list:
+def fetch_all_other_cases(app, target_id: str) -> tuple:
     candidates = []
     # 1. Attempt database lookup
     try:
@@ -152,16 +152,16 @@ def fetch_all_other_cases(app, target_id: str) -> list:
             for r in rows:
                 c_id = r.get("Case", {}).get("case_id")
                 if c_id:
-                    c_data = fetch_case_data(app, c_id)
+                    c_data, mode = fetch_case_data(app, c_id)
                     if c_data:
                         candidates.append(c_data)
             if candidates:
-                return candidates
+                return candidates, "live"
     except Exception as e:
         logger.error(f"Database query failed for other cases: {e}")
 
     # 2. Fallback to seed data
-    return [val for key, val in SEED_CASES.items() if key != target_id]
+    return [val for key, val in SEED_CASES.items() if key != target_id], "seed_fallback"
 
 def call_llm(query: str, gemini_key: str = None, anthropic_key: str = None) -> dict:
     system_instruction = (
@@ -314,14 +314,16 @@ def handler(request: Request):
                         "classification": classification
                     }), 400)
 
-                target = fetch_case_data(app, target_id)
+                target, target_mode = fetch_case_data(app, target_id)
                 if not target:
                     return make_response(jsonify({
                         "error": f"Target case '{target_id}' could not be resolved from DB or seeds.",
                         "classification": classification
                     }), 404)
 
-                candidates = fetch_all_other_cases(app, target_id)
+                candidates, cand_mode = fetch_all_other_cases(app, target_id)
+                mode = "live" if (target_mode == "live" and cand_mode == "live") else "seed_fallback"
+
                 payload = {
                     "target": target,
                     "candidates": candidates,
@@ -331,6 +333,7 @@ def handler(request: Request):
                 
                 return make_response(jsonify({
                     "intent": "case-similarity-search",
+                    "mode": mode,
                     "classification": classification,
                     "status_code": resp.status_code,
                     "response": resp.json() if resp.status_code == 200 else resp.text
@@ -338,12 +341,25 @@ def handler(request: Request):
 
             elif intent == "graph-network-query":
                 canonical_id = classification.get("graph_query_canonical_id")
+                if not canonical_id:
+                    return make_response(jsonify({
+                        "error": "Invalid intent parameters: Missing target canonical ID for graph-network-query.",
+                        "classification": classification
+                    }), 400)
+
+                payload = {
+                    "canonical_id": canonical_id
+                }
+                resp = requests.post(f"{base_url}/graph_fn/traverse", json=payload, headers=headers, timeout=15)
+                
+                resp_json = resp.json() if resp.status_code == 200 else {}
                 return make_response(jsonify({
                     "intent": "graph-network-query",
+                    "mode": resp_json.get("mode", "unknown"),
                     "classification": classification,
-                    "parameters": {"canonical_id": canonical_id},
-                    "message": "Graph network queries are routed to graph_fn (extension point ready, to be implemented in Task 4)"
-                }), 200)
+                    "status_code": resp.status_code,
+                    "response": resp_json if resp.status_code == 200 else resp.text
+                }), resp.status_code)
 
             else:
                 return make_response(jsonify({

@@ -5,6 +5,21 @@ import zcatalyst_sdk
 
 from rbac import Role, Resource, check_access
 
+# ==============================================================================
+# PRAMAAN RBAC ACCESS CONTROL POLICY & DESIGN REASONING
+# ==============================================================================
+# - own_case_detail:
+#   * Sub-Inspector (SI) and ACP roles require individual, person-level case
+#     details and suspect identification reports to conduct active criminal
+#     investigations. They are granted access.
+#   * Analysts and Policy Makers work on aggregate trends, hotspot metrics,
+#     and regional statistics. They are denied access to raw person-level
+#     identities and case details to enforce user privacy and data protection.
+# - aggregate_analytics:
+#   * Granted to Analysts and Policy Makers for aggregate queries (e.g. Leiden
+#     community partitions, statistical trends).
+# ==============================================================================
+
 # Configure logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

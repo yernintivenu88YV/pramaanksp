@@ -712,7 +712,7 @@ export default function App() {
       {activeTab === 'graph_network' && (
         <div style={{ border: '1px solid #ddd', padding: '20px', borderRadius: '0 0 8px 8px' }}>
           <h2>GDS Criminal Network Explorer</h2>
-          <p style={{ color: '#555' }}>Visualize relationships between cases, vehicles, and canonical suspects. Runs real-time neighbor traversals and Leiden gang detection.</p>
+          <p style={{ color: '#555' }}>Visualize relationships between cases, vehicles, and canonical suspects. Runs real-time neighbor traversals and Leiden associate clustering.</p>
 
           <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
             <div style={{ flex: 1 }}>
@@ -752,7 +752,7 @@ export default function App() {
                   fontWeight: 'bold'
                 }}
               >
-                {communityPending ? 'Running Leiden...' : 'Run Leiden Gang Detection'}
+                {communityPending ? 'Running Leiden...' : 'Run Leiden Associate Clustering'}
               </button>
             </div>
           </div>
@@ -766,7 +766,7 @@ export default function App() {
           )}
           {communityError && (
             <div style={{ marginBottom: '20px', padding: '15px', background: '#fee2e2', border: '1px solid #f87171', color: '#991b1b', borderRadius: '6px' }}>
-              <h3>Gang Detection Failed</h3>
+              <h3>Associate Clustering Failed</h3>
               <p>{communityError}</p>
             </div>
           )}
@@ -783,7 +783,7 @@ export default function App() {
             {/* Communities */}
             {communityData && (
               <div style={{ flex: '1 1 400px' }}>
-                <h3>Leiden Gang Partitioning</h3>
+                <h3>Leiden Associate Clusters</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #ddd' }}>
                   <thead>
                     <tr style={{ background: '#f3f4f6' }}>
@@ -797,7 +797,7 @@ export default function App() {
                       <tr key={idx} style={{ background: row.communityId % 2 === 0 ? '#f8fafc' : '#ffffff' }}>
                         <td style={{ padding: '8px', border: '1px solid #ddd', fontWeight: 'bold' }}>
                           <span style={{ background: '#e0e7ff', color: '#4338ca', padding: '2px 8px', borderRadius: '12px' }}>
-                            Gang #{row.communityId}
+                            Cluster #{row.communityId}
                           </span>
                         </td>
                         <td style={{ padding: '8px', border: '1px solid #ddd' }}>{row.name}</td>

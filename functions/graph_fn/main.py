@@ -100,8 +100,9 @@ def handler(request: Request):
     try:
         app = zcatalyst_sdk.initialize()
 
-        # Gate all requests with RBAC pre-check
-        rbac_res = verify_rbac(app, request, "own_case_detail")
+        # Dynamic resource gating based on endpoint path
+        resource_needed = "aggregate_analytics" if request.path == "/communities" else "own_case_detail"
+        rbac_res = verify_rbac(app, request, resource_needed)
         if not rbac_res["allowed"]:
             return make_response(jsonify({"error": rbac_res["error"]}), 403)
 

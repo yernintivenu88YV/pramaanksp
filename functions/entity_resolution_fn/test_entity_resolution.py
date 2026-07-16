@@ -73,6 +73,11 @@ TEST_PAIRS = [
         PersonRecord("FIR-2010-P2", "fir", "Suresh Reddy", address="Bengaluru", age=45, name_kannada="ಸುರೇಶ್ ರೆಡ್ಡಿ"),
         False, "Kannada name true-negative (unrelated people)"
     ),
+    (
+        PersonRecord("FIR-2020-P1", "fir", "Ramesh Gowda", address="Malleswaram, Bengaluru", age=30, name_kannada="ರಮೇಶ್ ಗೌಡ"),
+        PersonRecord("FIR-2020-P2", "fir", "Ramesh Nayak", address="Jayanagar, Bengaluru", age=30, name_kannada="ರಮೇಶ್ ನಾಯಕ್"),
+        False, "Kannada name sharing first name but different surname (should reject)"
+    ),
 ]
 
 
