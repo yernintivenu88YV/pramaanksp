@@ -21,6 +21,7 @@ class PersonRecordInput(BaseModel):
     vehicle_reg: Optional[str] = None
     address: Optional[str] = None
     age: Optional[int] = None
+    name_kannada: Optional[str] = None
 
     def to_person_record(self) -> PersonRecord:
         return PersonRecord(
@@ -31,6 +32,7 @@ class PersonRecordInput(BaseModel):
             vehicle_reg=self.vehicle_reg,
             address=self.address,
             age=self.age,
+            name_kannada=self.name_kannada
         )
 
 

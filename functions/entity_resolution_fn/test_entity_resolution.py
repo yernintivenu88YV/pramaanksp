@@ -8,6 +8,15 @@ pairs and measure precision/recall against that ground truth -- not to
 eyeball the output and call it done.
 """
 
+import sys
+# Set console output encoding to utf-8 to prevent cp1252 errors on Windows
+if sys.platform.startswith('win'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except AttributeError:
+        pass
+
 from entity_resolution import PersonRecord, resolve_pair, MatchDecision
 
 # Each tuple: (record_a, record_b, is_true_match, note)
@@ -53,6 +62,16 @@ TEST_PAIRS = [
         PersonRecord("FIR-1400-P1", "fir", "Ramesh Gowda", address="Hubli", age=30),
         PersonRecord("FIR-1420-P2", "fir", "Ganesh Naidu", address="Belagavi", age=55),
         False, "no meaningful similarity on any field"
+    ),
+    (
+        PersonRecord("FIR-2000-P1", "fir", "Mohammad Rafi", address="Malleshwaram, Bengaluru", age=45, name_kannada="ಮೊಹಮ್ಮದ್ ರಫಿ"),
+        PersonRecord("FIR-2000-P2", "fir", "Mahammad Rafi", address="Malleshwaram, Bengaluru", age=45, name_kannada="ಮಹಮ್ಮದ್ ರಫಿ"),
+        True, "Kannada name spelling variation (transliterated to Mohammad vs Mahammad)"
+    ),
+    (
+        PersonRecord("FIR-2010-P1", "fir", "Ramesh Gowda", address="Mysuru", age=30, name_kannada="ರಮೇಶ್ ಗೌಡ"),
+        PersonRecord("FIR-2010-P2", "fir", "Suresh Reddy", address="Bengaluru", age=45, name_kannada="ಸುರೇಶ್ ರೆಡ್ಡಿ"),
+        False, "Kannada name true-negative (unrelated people)"
     ),
 ]
 

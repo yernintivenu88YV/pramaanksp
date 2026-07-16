@@ -38,6 +38,15 @@ export default function App() {
   const [irError, setIrError] = useState(null)
   const [irPending, setIrPending] = useState(false)
 
+  // Graph Network state
+  const [graphCanonId, setGraphCanonId] = useState('CANON-0042')
+  const [graphData, setGraphData] = useState(null)
+  const [graphError, setGraphError] = useState(null)
+  const [graphPending, setGraphPending] = useState(false)
+  const [communityData, setCommunityData] = useState(null)
+  const [communityError, setCommunityError] = useState(null)
+  const [communityPending, setCommunityPending] = useState(false)
+
   // Target case (CASE-001)
   const targetCase = {
     case_id: "CASE-001",
@@ -216,6 +225,138 @@ export default function App() {
       })
   }
 
+  const runGraphTraverse = (canonId) => {
+    setGraphData(null)
+    setGraphError(null)
+    setGraphPending(true)
+
+    fetch('/server/graph_fn/traverse', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ canonical_id: canonId || graphCanonId })
+    })
+      .then(async resp => {
+        const data = await resp.json()
+        setGraphPending(false)
+        if (resp.status === 200) {
+          setGraphData(data)
+        } else {
+          setGraphError(data.error || `HTTP Error ${resp.status}`)
+        }
+      })
+      .catch(err => {
+        setGraphPending(false)
+        setGraphError(err.message || 'Network error')
+      })
+  }
+
+  const runCommunitiesLeiden = () => {
+    setCommunityData(null)
+    setCommunityError(null)
+    setCommunityPending(true)
+
+    fetch('/server/graph_fn/communities', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+      .then(async resp => {
+        const data = await resp.json()
+        setCommunityPending(false)
+        if (resp.status === 200) {
+          setCommunityData(data.communities)
+        } else {
+          setCommunityError(data.error || `HTTP Error ${resp.status}`)
+        }
+      })
+      .catch(err => {
+        setCommunityPending(false)
+        setCommunityError(err.message || 'Network error')
+      })
+  }
+
+  const renderSVGGraph = () => {
+    if (!graphData || !graphData.nodes || graphData.nodes.length === 0) return null;
+    
+    const center = { x: 250, y: 250 };
+    const radius = 150;
+    const numNodes = graphData.nodes.length;
+    
+    const positions = {
+      [graphData.canonical_id]: center
+    };
+    
+    graphData.nodes.forEach((node, idx) => {
+      const angle = (idx * 2 * Math.PI) / numNodes;
+      positions[node.id] = {
+        x: center.x + radius * Math.cos(angle),
+        y: center.y + radius * Math.sin(angle)
+      };
+    });
+
+    return (
+      <svg width="500" height="500" style={{ background: '#0f172a', borderRadius: '8px', border: '1px solid #334155' }}>
+        {/* Render lines */}
+        {graphData.relationships.map((rel, idx) => {
+          const start = positions[rel.source] || center;
+          const end = positions[rel.target] || center;
+          const midX = (start.x + end.x) / 2;
+          const midY = (start.y + end.y) / 2;
+          
+          return (
+            <g key={idx}>
+              <line 
+                x1={start.x} y1={start.y} 
+                x2={end.x} y2={end.y} 
+                stroke="#64748b" strokeWidth="2" 
+                strokeDasharray="4 4"
+              />
+              <rect x={midX - 45} y={midY - 8} width="90" height="16" rx="3" fill="#1e293b" stroke="#475569" strokeWidth="1" />
+              <text 
+                x={midX} y={midY + 4} 
+                fill="#94a3b8" fontSize="10" 
+                fontWeight="bold" textAnchor="middle"
+              >
+                {rel.type}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Central query node */}
+        <circle cx={center.x} cy={center.y} r="24" fill="#eab308" stroke="#ca8a04" strokeWidth="3" />
+        <text x={center.x} y={center.y + 4} fill="#0f172a" fontSize="11" fontWeight="bold" textAnchor="middle">
+          TARGET
+        </text>
+        <text x={center.x} y={center.y + 40} fill="#eab308" fontSize="12" fontWeight="bold" textAnchor="middle">
+          {graphData.canonical_id}
+        </text>
+
+        {/* Surrounding nodes */}
+        {graphData.nodes.map((node) => {
+          const pos = positions[node.id] || center;
+          const color = node.label === 'Case' ? '#3b82f6' : node.label === 'Vehicle' ? '#ef4444' : '#10b981';
+          const strokeColor = node.label === 'Case' ? '#1d4ed8' : node.label === 'Vehicle' ? '#b91c1c' : '#047857';
+          
+          return (
+            <g key={node.id}>
+              <circle cx={pos.x} cy={pos.y} r="18" fill={color} stroke={strokeColor} strokeWidth="2" />
+              <text x={pos.x} y={pos.y + 4} fill="white" fontSize="9" fontWeight="bold" textAnchor="middle">
+                {node.label[0]}
+              </text>
+              <text x={pos.x} y={pos.y + 30} fill="#cbd5e1" fontSize="11" textAnchor="middle">
+                {node.id}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    );
+  }
+
   if (loading) {
     return <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>Loading Catalyst Application...</div>
   }
@@ -307,6 +448,21 @@ export default function App() {
           }}
         >
           Intent Router (NL Search)
+        </button>
+        <button 
+          onClick={() => setActiveTab('graph_network')} 
+          style={{
+            padding: '10px 20px',
+            border: 'none',
+            borderBottom: activeTab === 'graph_network' ? '3px solid #2563eb' : 'none',
+            background: activeTab === 'graph_network' ? '#eff6ff' : '#f3f4f6',
+            color: activeTab === 'graph_network' ? '#1e40af' : '#4b5563',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            borderRadius: '4px 4px 0 0'
+          }}
+        >
+          Graph Relations (GDS)
         </button>
       </div>
 
@@ -549,6 +705,110 @@ export default function App() {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Graph Network panel */}
+      {activeTab === 'graph_network' && (
+        <div style={{ border: '1px solid #ddd', padding: '20px', borderRadius: '0 0 8px 8px' }}>
+          <h2>GDS Criminal Network Explorer</h2>
+          <p style={{ color: '#555' }}>Visualize relationships between cases, vehicles, and canonical suspects. Runs real-time neighbor traversals and Leiden gang detection.</p>
+
+          <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Suspect Canonical ID:</label>
+              <input
+                type="text"
+                value={graphCanonId}
+                onChange={e => setGraphCanonId(e.target.value)}
+                style={{ width: '100%', padding: '8px', fontSize: '15px', borderRadius: '4px', border: '1px solid #ccc', marginBottom: '10px' }}
+              />
+              <button
+                onClick={() => runGraphTraverse(graphCanonId)}
+                disabled={graphPending}
+                style={{
+                  padding: '10px 20px',
+                  background: '#2563eb',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  marginRight: '10px'
+                }}
+              >
+                {graphPending ? 'Traversing...' : 'Traverse Suspect Network'}
+              </button>
+              <button
+                onClick={runCommunitiesLeiden}
+                disabled={communityPending}
+                style={{
+                  padding: '10px 20px',
+                  background: '#10b981',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold'
+                }}
+              >
+                {communityPending ? 'Running Leiden...' : 'Run Leiden Gang Detection'}
+              </button>
+            </div>
+          </div>
+
+          {/* Errors */}
+          {graphError && (
+            <div style={{ marginBottom: '20px', padding: '15px', background: '#fee2e2', border: '1px solid #f87171', color: '#991b1b', borderRadius: '6px' }}>
+              <h3>Traversal Failed</h3>
+              <p>{graphError}</p>
+            </div>
+          )}
+          {communityError && (
+            <div style={{ marginBottom: '20px', padding: '15px', background: '#fee2e2', border: '1px solid #f87171', color: '#991b1b', borderRadius: '6px' }}>
+              <h3>Gang Detection Failed</h3>
+              <p>{communityError}</p>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+            {/* Visual graph */}
+            {graphData && (
+              <div style={{ flex: '1 1 500px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <h3>Visual Relationship Topology ({graphData.mode === 'mock' ? 'Mock Mode' : 'Live Mode'})</h3>
+                {renderSVGGraph()}
+              </div>
+            )}
+
+            {/* Communities */}
+            {communityData && (
+              <div style={{ flex: '1 1 400px' }}>
+                <h3>Leiden Gang Partitioning</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #ddd' }}>
+                  <thead>
+                    <tr style={{ background: '#f3f4f6' }}>
+                      <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>Community ID</th>
+                      <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>Suspect Name</th>
+                      <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>Canonical ID</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {communityData.map((row, idx) => (
+                      <tr key={idx} style={{ background: row.communityId % 2 === 0 ? '#f8fafc' : '#ffffff' }}>
+                        <td style={{ padding: '8px', border: '1px solid #ddd', fontWeight: 'bold' }}>
+                          <span style={{ background: '#e0e7ff', color: '#4338ca', padding: '2px 8px', borderRadius: '12px' }}>
+                            Gang #{row.communityId}
+                          </span>
+                        </td>
+                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{row.name}</td>
+                        <td style={{ padding: '8px', border: '1px solid #ddd', fontFamily: 'monospace' }}>{row.canonical_id}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

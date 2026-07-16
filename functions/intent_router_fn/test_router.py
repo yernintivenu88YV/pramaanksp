@@ -83,13 +83,19 @@ def test_routing_stub():
     print(f"Classified Intent: {res2.get('intent')}")
     print(f"Extracted parameters: {json.dumps(res2, indent=2)}")
     assert res2.get('intent') == "entity-lookup"
-    # Verify names are extracted
+    
+    # Verify names are extracted and transliterated
     rec_a = res2.get('entity_lookup_record_a') or {}
     rec_b = res2.get('entity_lookup_record_b') or {}
-    print(f"Extracted Record A Name: {rec_a.get('name')}")
-    print(f"Extracted Record B Name: {rec_b.get('name')}")
+    print(f"Extracted Record A Romanized Name: {rec_a.get('name')}")
+    print(f"Extracted Record B Romanized Name: {rec_b.get('name')}")
+    print(f"Extracted Record A Kannada Name: {rec_a.get('name_kannada')}")
+    print(f"Extracted Record B Kannada Name: {rec_b.get('name_kannada')}")
+    
     assert rec_a.get('name') is not None
     assert rec_b.get('name') is not None
+    assert rec_a.get('name_kannada') == "ಮೊಹಮ್ಮದ್ ರಫಿ"
+    assert rec_b.get('name_kannada') == "ಮಹಮ್ಮದ್ ರಫಿ"
 
     # 3. Test graph network extension point (English)
     q3 = "Who is linked to suspect CANON-0042?"

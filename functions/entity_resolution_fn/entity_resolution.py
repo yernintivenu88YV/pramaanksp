@@ -49,6 +49,7 @@ class PersonRecord:
     vehicle_reg: Optional[str] = None
     address: Optional[str] = None
     age: Optional[int] = None
+    name_kannada: Optional[str] = None
 
 
 @dataclass

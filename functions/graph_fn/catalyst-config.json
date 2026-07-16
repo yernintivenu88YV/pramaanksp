@@ -1,0 +1,11 @@
+{
+	"deployment": {
+		"name": "graph_fn",
+		"stack": "python_3_12",
+		"type": "advancedio",
+		"env_variables": {}
+	},
+	"execution": {
+		"main": "main.py"
+	}
+}

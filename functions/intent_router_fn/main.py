@@ -175,13 +175,15 @@ def call_llm(query: str, gemini_key: str = None, anthropic_key: str = None) -> d
         "Response Schema:\n"
         "{\n"
         "  \"intent\": \"entity-lookup\" | \"case-similarity-search\" | \"graph-network-query\",\n"
-        "  \"entity_lookup_record_a\": { \"name\": string, \"age\": int, \"gender\": string, \"address\": string, \"phone\": string, \"vehicle_reg\": string },\n"
-        "  \"entity_lookup_record_b\": { \"name\": string, \"age\": int, \"gender\": string, \"address\": string, \"phone\": string, \"vehicle_reg\": string },\n"
+        "  \"entity_lookup_record_a\": { \"name\": string, \"name_kannada\": string, \"age\": int, \"gender\": string, \"address\": string, \"phone\": string, \"vehicle_reg\": string },\n"
+        "  \"entity_lookup_record_b\": { \"name\": string, \"name_kannada\": string, \"age\": int, \"gender\": string, \"address\": string, \"phone\": string, \"vehicle_reg\": string },\n"
         "  \"case_similarity_target_id\": string,\n"
         "  \"case_similarity_top_k\": int,\n"
         "  \"graph_query_canonical_id\": string\n"
         "}\n"
         "\n"
+        "Transliteration Rule for Kannada names:\n"
+        "If a name in the query is written in Kannada script (e.g. 'ಮೊಹಮ್ಮದ್ ರಫಿ' or 'ಮಹಮ್ಮದ್ ರಫಿ'), extract the original Kannada script into 'name_kannada' and provide a romanized transliteration (e.g. 'Mohammad Rafi' or 'Mahammad Rafi') in 'name'. If the name is in English, set 'name_kannada' to null and populate 'name'.\n"
         "Always respond with a valid JSON object matching this schema. If any parameter field is missing or not mentioned, set it to null or default. Return only raw JSON, no markdown formatting."
     )
 
@@ -282,6 +284,12 @@ def handler(request: Request):
                         "error": "Invalid intent parameters: Both record names must be specified for entity-lookup.",
                         "classification": classification
                     }), 400)
+
+                # Set required metadata defaults for Pydantic schema validation
+                rec_a.setdefault("source_id", "router-query-a")
+                rec_a.setdefault("source_table", "query")
+                rec_b.setdefault("source_id", "router-query-b")
+                rec_b.setdefault("source_table", "query")
 
                 payload = {
                     "record_a": rec_a,
