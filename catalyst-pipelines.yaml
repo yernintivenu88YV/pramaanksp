@@ -1,0 +1,47 @@
+# ==============================================================================
+# Pramaan CI/CD Pipeline Configuration
+# ==============================================================================
+# Automatic trigger on push for all test stages.
+# Deployment step requires manual execution / console approval (when: manual).
+# ==============================================================================
+
+pipeline-runner: runner_medium
+
+runners:
+  runner_medium:
+    config-id: 2 # 2GB RAM, 1.2 vCPU, standard runner for Python/Node tests
+
+variables:
+  # Mandatory variable for CLI deployments
+  CATALYST_TOKEN: '« env.CATALYST_TOKEN »'
+
+stages:
+  - name: test_stage
+    jobs:
+      - name: run_unit_tests
+        steps:
+          - name: Entity Resolution Unit Tests
+            cmd: python functions/entity_resolution_fn/test_entity_resolution.py
+          - name: Case Twin Unit Tests
+            cmd: python functions/case_twin_fn/test_case_twin.py
+          - name: RBAC Gateway Unit Tests
+            cmd: python functions/gateway_fn/test_rbac.py
+          - name: GDS Graph & Priority Unit Tests
+            cmd: python functions/graph_fn/test_graph.py
+          - name: Public Assistant Isolation Scanner
+            cmd: python client/public-assistant/test_isolation.py
+
+  - name: deploy_stage
+    jobs:
+      - name: promote_to_production
+        # Gated to prevent automatic deployments to Production
+        when: manual
+        steps:
+          - name: Production Build React Frontend
+            cmd: |
+              cd client_src
+              npm install
+              npm run build
+              cd ..
+          - name: Deploy functions and static hosting to Production
+            cmd: catalyst deploy --prod --token $CATALYST_TOKEN
