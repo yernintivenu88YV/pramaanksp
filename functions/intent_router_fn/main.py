@@ -5,6 +5,8 @@ import requests
 from flask import Request, make_response, jsonify
 import zcatalyst_sdk
 
+import bhashini  # Bhashini voice layer (ASR/TTS); mock-mode without a key
+
 # Configure logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -228,6 +230,25 @@ def call_llm(query: str, gemini_key: str = None, anthropic_key: str = None) -> d
     else:
         raise ValueError("No LLM API keys provided.")
 
+def _speech_summary(route_json: dict) -> str:
+    """
+    Short spoken confirmation for TTS. Kept generic and brief on purpose --
+    the full structured result is returned as JSON for the UI; the voice
+    channel just confirms what was understood and routed.
+    """
+    if not isinstance(route_json, dict):
+        return "Sorry, I could not process that request."
+    if route_json.get("error"):
+        return "Sorry, that request could not be completed."
+    intent = route_json.get("intent")
+    spoken = {
+        "entity-lookup": "Running an identity resolution lookup.",
+        "case-similarity-search": "Searching for similar cases.",
+        "graph-network-query": "Looking up the suspect network.",
+    }
+    return spoken.get(intent, "Your request has been processed.")
+
+
 def handler(request: Request):
     try:
         app = zcatalyst_sdk.initialize()
@@ -367,9 +388,65 @@ def handler(request: Request):
                     "classification": classification
                 }), 400)
 
+        elif request.path == "/voice" and request.method == "POST":
+            # Voice layer: ASR in -> the EXISTING /route path -> TTS out.
+            # This is deliberately NOT a separate reasoning pipeline: it
+            # transcribes speech, feeds the transcript into the same /route
+            # endpoint the typed UI uses (RBAC, LLM intent, downstream
+            # routing all reused), then speaks a short confirmation. Kannada
+            # is transcribed and routed IN KANNADA -- no translation step.
+            body = request.get_json() or {}
+            audio_b64 = body.get("audio_base64")
+            source_language = body.get("source_language", "kn")
+            want_tts = body.get("tts", True)
+            if not audio_b64:
+                return make_response(jsonify({"error": "Missing 'audio_base64' parameter"}), 400)
+
+            # 1. ASR (Bhashini). Mock mode if no key -> empty transcript.
+            asr_res = bhashini.asr(audio_b64, source_language)
+            transcript = (asr_res.get("transcript") or "").strip()
+            if not transcript:
+                # Fail loudly rather than fabricate a query (project rule).
+                return make_response(jsonify({
+                    "stage": "asr",
+                    "asr": asr_res,
+                    "error": "No transcript produced from audio. In mock mode, set "
+                             "BHASHINI_* env vars for live ASR; otherwise check the audio input."
+                }), 200)
+
+            # 2. Feed transcript into the SAME /route pipeline (self HTTP call,
+            #    the pattern already used across these functions), forwarding
+            #    the authenticated session so RBAC still applies.
+            is_local = os.getenv("X_ZOHO_CATALYST_IS_LOCAL") == "true" or os.getenv("CATALYST_ACTIVE_DC") is None
+            base_url = "http://127.0.0.1:3000/server" if is_local else f"https://{app.config.get('project_domain')}/server"
+            headers = {"Content-Type": "application/json"}
+            for h in ('cookie', 'authorization', 'x-zc-session-id'):
+                val = request.headers.get(h)
+                if val:
+                    headers[h] = val
+            route_resp = requests.post(f"{base_url}/intent_router_fn/route",
+                                       json={"query": transcript}, headers=headers, timeout=30)
+            try:
+                route_json = route_resp.json()
+            except Exception:
+                route_json = {"raw": route_resp.text}
+
+            # 3. TTS a short spoken confirmation, in the spoken language.
+            speak_res = {"mode": "skipped"}
+            if want_tts:
+                speak_res = bhashini.tts(_speech_summary(route_json),
+                                         asr_res.get("language", source_language))
+
+            return make_response(jsonify({
+                "transcript": transcript,
+                "asr": {"mode": asr_res.get("mode"), "language": asr_res.get("language")},
+                "route": route_json,
+                "tts": speak_res,
+            }), route_resp.status_code)
+
         elif request.path == "/health" and request.method == "GET":
             return make_response(jsonify({
-                "status": "ok", 
+                "status": "ok",
                 "module": "intent_router_fn"
             }), 200)
 

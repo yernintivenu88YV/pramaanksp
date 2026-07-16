@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -37,6 +37,14 @@ export default function App() {
   const [irResult, setIrResult] = useState(null)
   const [irError, setIrError] = useState(null)
   const [irPending, setIrPending] = useState(false)
+
+  // Voice (Bhashini) state -- ASR in / TTS out over the SAME intent-router path
+  const [irRecording, setIrRecording] = useState(false)
+  const [irVoicePending, setIrVoicePending] = useState(false)
+  const [irTranscript, setIrTranscript] = useState('')
+  const [irVoiceLang, setIrVoiceLang] = useState('kn')
+  const mediaRecorderRef = useRef(null)
+  const audioChunksRef = useRef([])
 
   // Graph Network state
   const [graphCanonId, setGraphCanonId] = useState('CANON-0042')
@@ -223,6 +231,80 @@ export default function App() {
         setIrPending(false)
         setIrError(err.message || 'Network error')
       })
+  }
+
+  // --- Voice: capture mic audio, send to intent_router_fn/voice (Bhashini
+  //     ASR -> existing /route -> Bhashini TTS). Kannada stays Kannada. ---
+  const sendVoice = (audioBase64) => {
+    setIrVoicePending(true)
+    setIrError(null)
+    setIrResult(null)
+    setIrTranscript('')
+
+    fetch('/server/intent_router_fn/voice', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        audio_base64: audioBase64,
+        source_language: irVoiceLang,
+        tts: true
+      })
+    })
+      .then(async resp => {
+        const data = await resp.json()
+        setIrVoicePending(false)
+        if (data.transcript) {
+          setIrTranscript(data.transcript)
+          setIrQuery(data.transcript) // show what was heard in the query box
+        }
+        if (data.route) setIrResult(data.route)
+        if (data.error && !data.route) setIrError(data.error)
+        // Play back TTS audio if the server returned any (live Bhashini only).
+        const b64 = data.tts && data.tts.audio_base64
+        if (b64) {
+          try { new Audio('data:audio/wav;base64,' + b64).play() } catch (e) {}
+        }
+      })
+      .catch(err => {
+        setIrVoicePending(false)
+        setIrError(err.message || 'Voice request failed')
+      })
+  }
+
+  const toggleRecording = async () => {
+    // Stop if already recording.
+    if (irRecording && mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop()
+      setIrRecording(false)
+      return
+    }
+    if (!navigator.mediaDevices || !window.MediaRecorder) {
+      setIrError('This browser does not support microphone capture (MediaRecorder).')
+      return
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      // NOTE: browsers record webm/ogg; production Bhashini prefers 16kHz wav.
+      // Server-side/mock handles format; a wav re-encode is a production step.
+      const recorder = new MediaRecorder(stream)
+      audioChunksRef.current = []
+      recorder.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
+      recorder.onstop = () => {
+        stream.getTracks().forEach(t => t.stop())
+        const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType })
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          const b64 = String(reader.result).split(',')[1] || ''
+          sendVoice(b64)
+        }
+        reader.readAsDataURL(blob)
+      }
+      mediaRecorderRef.current = recorder
+      recorder.start()
+      setIrRecording(true)
+    } catch (e) {
+      setIrError('Microphone access was denied or unavailable.')
+    }
   }
 
   const runGraphTraverse = (canonId) => {
@@ -470,7 +552,7 @@ export default function App() {
       {activeTab === 'case_twin' && (
         <div style={{ border: '1px solid #ddd', padding: '20px', borderRadius: '0 0 8px 8px' }}>
           <h2>Case-Twin Signature Match Engine</h2>
-          <p style={{ color: '#555' }}>Ranks candidate cases against Target Case (CASE-001) using modus operandi, location, time patterns, and TF-IDF narrative similarities.</p>
+          <p style={{ color: '#555' }}>Ranks candidate cases against Target Case (CASE-001) using modus operandi, location, time patterns, and multilingual embedding narrative similarity (Kannada + English, no translation).</p>
 
           <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', padding: '15px', borderRadius: '6px', marginBottom: '20px' }}>
             <h3>Target Case: CASE-001</h3>
@@ -644,21 +726,54 @@ export default function App() {
             </div>
           </div>
 
-          <button 
-            onClick={runIntentRoute} 
-            disabled={irPending}
-            style={{ 
-              padding: '10px 20px', 
-              background: irPending ? '#93c5fd' : '#2563eb', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '4px', 
-              cursor: irPending ? 'not-allowed' : 'pointer', 
-              fontWeight: 'bold' 
-            }}
-          >
-            {irPending ? 'Analyzing Query...' : 'Send Query'}
-          </button>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <button
+              onClick={runIntentRoute}
+              disabled={irPending}
+              style={{
+                padding: '10px 20px',
+                background: irPending ? '#93c5fd' : '#2563eb',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: irPending ? 'not-allowed' : 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              {irPending ? 'Analyzing Query...' : 'Send Query'}
+            </button>
+
+            {/* Voice input: Bhashini ASR -> same /route path -> Bhashini TTS */}
+            <button
+              onClick={toggleRecording}
+              disabled={irVoicePending}
+              title="Speak your query (Kannada or English)"
+              style={{
+                padding: '10px 20px',
+                background: irRecording ? '#dc2626' : (irVoicePending ? '#93c5fd' : '#0f766e'),
+                color: 'white', border: 'none', borderRadius: '4px',
+                cursor: irVoicePending ? 'not-allowed' : 'pointer', fontWeight: 'bold'
+              }}
+            >
+              {irRecording ? '⏹ Stop & Send' : (irVoicePending ? 'Transcribing…' : '🎤 Speak')}
+            </button>
+
+            <label style={{ fontSize: '13px', color: '#555' }}>
+              Voice language:{' '}
+              <select value={irVoiceLang} onChange={e => setIrVoiceLang(e.target.value)}
+                      style={{ padding: '4px' }}>
+                <option value="kn">Kannada (ಕನ್ನಡ)</option>
+                <option value="en">English</option>
+              </select>
+            </label>
+          </div>
+
+          {irTranscript && (
+            <div style={{ marginTop: '12px', padding: '10px 12px', background: '#ecfeff',
+                          border: '1px solid #a5f3fc', borderRadius: '6px', fontSize: '14px' }}>
+              🗣 <strong>Heard:</strong> {irTranscript}
+            </div>
+          )}
 
           {/* Error Feedback */}
           {irError && (

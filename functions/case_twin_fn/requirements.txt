@@ -3,3 +3,12 @@ rapidfuzz>=3.0
 pydantic>=2.0
 scikit-learn>=1.0
 requests>=2.25.0
+
+# Narrative similarity primary path: multilingual sentence embeddings
+# (Vyakyarth). This pulls torch + transformers, which are heavy for a
+# Catalyst Advanced I/O package. narrative_similarity() falls back to the
+# scikit-learn TF-IDF path above if the model can't be loaded, so the
+# function still deploys and runs if this layer is trimmed for size.
+# For a lean production function, prefer precomputing narrative vectors at
+# ingestion (see EMBEDDINGS_EVAL.md) so only numpy is needed at match time.
+sentence-transformers>=3.0

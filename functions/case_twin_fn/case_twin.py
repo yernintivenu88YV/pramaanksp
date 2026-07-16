@@ -8,21 +8,64 @@ pattern, modus operandi, weapon) plus narrative text similarity plus
 one signal that only exists because entity resolution ran first: do
 these two cases already share a canonicalized suspect?
 
-Narrative similarity here uses TF-IDF + cosine similarity, an honest,
-fully-testable baseline -- this sandbox has no network access to model
-hubs (Vyakyarth, BGE-M3), so it can't download and verify a real
-embedding model the way it verified everything else in this project.
-Swapping in real sentence embeddings later is a drop-in replacement for
-narrative_similarity() only; nothing else in this module needs to change.
+Narrative similarity uses multilingual sentence embeddings (Vyakyarth,
+Krutrim AI Labs -- purpose-built for Indic languages incl. Kannada) as
+the PRIMARY signal, with TF-IDF + cosine as a graceful fallback if the
+embedding model can't be loaded in the deployed environment. See
+narrative_similarity() for the language-handling contract and
+_get_embed_model() for the fallback behaviour.
 """
 
 from dataclasses import dataclass, field
 from typing import Optional, List
 from datetime import datetime
+import os
 import math
+import logging
 from rapidfuzz.distance import JaroWinkler
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+
+logger = logging.getLogger(__name__)
+
+# Model id is overridable via env var so deployment can pin a different
+# checkpoint (e.g. BGE-M3) without a code change. Default is Vyakyarth --
+# chosen empirically over BGE-M3 on the Kannada + English narrative set;
+# see functions/case_twin_fn/EMBEDDINGS_EVAL.md for the numbers.
+_EMBED_MODEL_ID = os.getenv("NARRATIVE_EMBED_MODEL", "krutrim-ai-labs/Vyakyarth")
+_embed_model = None          # cached SentenceTransformer, loaded lazily once
+_embed_unavailable = False   # set True after a failed load so we don't retry
+
+
+def _get_embed_model():
+    """
+    Lazily load and cache the sentence-embedding model. If sentence-
+    transformers / torch / the weights aren't available in this
+    environment, record that once and return None so narrative_similarity
+    falls back to TF-IDF instead of raising -- the same fail-soft posture
+    graph_fn uses when Neo4j credentials are absent.
+    """
+    global _embed_model, _embed_unavailable
+    if _embed_model is not None or _embed_unavailable:
+        return _embed_model
+    try:
+        from sentence_transformers import SentenceTransformer
+        _embed_model = SentenceTransformer(_EMBED_MODEL_ID)
+        logger.info("Loaded narrative embedding model: %s", _EMBED_MODEL_ID)
+    except Exception as e:  # missing deps, no weights, OOM, etc.
+        _embed_unavailable = True
+        _embed_model = None
+        logger.warning(
+            "Embedding model '%s' unavailable (%s); narrative_similarity "
+            "falling back to TF-IDF.", _EMBED_MODEL_ID, e)
+    return _embed_model
+
+
+def _tfidf_narrative_similarity(a_text: str, b_text: str) -> float:
+    """TF-IDF cosine fallback -- the original baseline, kept intact."""
+    vec = TfidfVectorizer().fit([a_text, b_text])
+    vectors = vec.transform([a_text, b_text])
+    return float(cosine_similarity(vectors[0], vectors[1])[0][0])
 
 
 @dataclass
@@ -85,9 +128,39 @@ def weapon_similarity(a: CaseRecord, b: CaseRecord) -> float:
 
 
 def narrative_similarity(a: CaseRecord, b: CaseRecord) -> float:
-    vec = TfidfVectorizer().fit([a.narrative_text, b.narrative_text])
-    vectors = vec.transform([a.narrative_text, b.narrative_text])
-    return float(cosine_similarity(vectors[0], vectors[1])[0][0])
+    """
+    Similarity between two case narratives, in [0.0, 1.0].
+
+    DO NOT TRANSLATE before comparing. Kannada narratives are embedded and
+    compared IN KANNADA -- the multilingual model shares one vector space
+    across languages, so a Kannada narrative and its English twin land near
+    each other without any translate-then-process step. This mirrors the
+    decision already made in intent_router_fn for queries. If a future pass
+    is tempted to "simplify" this into translate-to-English-first: don't --
+    that reintroduces MT error and loses Kannada-specific police idiom.
+
+    Primary path: sentence embeddings (Vyakyarth). Fallback: TF-IDF cosine
+    if the model can't be loaded here (see _get_embed_model). TF-IDF is
+    lexical-overlap only and does NOT handle Kannada<->English or synonymy,
+    so it is a safety net for availability, not an equivalent substitute.
+    """
+    a_text = (a.narrative_text or "").strip()
+    b_text = (b.narrative_text or "").strip()
+    if not a_text or not b_text:
+        return 0.0
+
+    model = _get_embed_model()
+    if model is not None:
+        try:
+            emb = model.encode([a_text, b_text], normalize_embeddings=True)
+            # cosine of L2-normalized vectors == dot product, in [-1, 1];
+            # clamp to [0, 1] to match the other sub-scores' scale.
+            cos = float(emb[0] @ emb[1])
+            return max(0.0, min(1.0, cos))
+        except Exception as e:
+            logger.warning("Embedding similarity failed (%s); using TF-IDF.", e)
+
+    return _tfidf_narrative_similarity(a_text, b_text)
 
 
 def shared_suspect_score(a: CaseRecord, b: CaseRecord) -> float:

@@ -3,3 +3,5 @@ pydantic>=2.0
 requests>=2.25.0
 google-generativeai
 anthropic
+# Bhashini voice (ASR/TTS) uses `requests` only -- no extra SDK. See
+# bhashini.py; live mode needs BHASHINI_* env vars, else runs in mock mode.
