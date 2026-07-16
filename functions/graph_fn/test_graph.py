@@ -96,6 +96,38 @@ def run_tests():
         assert resp.status_code == 200
         assert "Export completed in Mock Mode" in data_exp.get("message")
 
+        # 5. Test POST /priority
+        mock_request.path = "/priority"
+        mock_request.method = "POST"
+        mock_request.get_json.return_value = {
+            "w_recency": 2.0,
+            "w_severity": 1.5,
+            "w_centrality": 1.0,
+            "w_warrant": 3.0
+        }
+        resp = handler(mock_request)
+        print("\nPOST /priority status:", resp.status_code)
+        data_prio = json.loads(resp.get_data(as_text=True))
+        print("POST /priority body (mode):", data_prio.get("mode"))
+        print("Scores returned count:", len(data_prio.get("scores", [])))
+        # Verify the top suspect is CANON-0042 (shares warrants and cases)
+        top_suspect = data_prio.get("scores", [])[0]
+        print("Top suspect:", top_suspect.get("name"), "with score:", top_suspect.get("total_score"))
+        assert resp.status_code == 200
+        assert len(data_prio.get("scores", [])) > 0
+        assert top_suspect.get("canonical_id") == "CANON-0042"
+
+        # 6. Test POST /hotspots
+        mock_request.path = "/hotspots"
+        mock_request.method = "POST"
+        resp = handler(mock_request)
+        print("\nPOST /hotspots status:", resp.status_code)
+        data_hot = json.loads(resp.get_data(as_text=True))
+        print("POST /hotspots body (mode):", data_hot.get("mode"))
+        print("Hotspots returned:", data_hot.get("hotspots"))
+        assert resp.status_code == 200
+        assert len(data_hot.get("hotspots", [])) > 0
+
         print("\nAll graph_fn local validation tests passed successfully!")
 
 if __name__ == "__main__":

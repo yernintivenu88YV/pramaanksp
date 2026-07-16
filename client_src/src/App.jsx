@@ -55,6 +55,20 @@ export default function App() {
   const [communityError, setCommunityError] = useState(null)
   const [communityPending, setCommunityPending] = useState(false)
 
+  // Analytics & Priority state
+  const [wRecency, setWRecency] = useState(2.0)
+  const [wSeverity, setWSeverity] = useState(1.5)
+  const [wCentrality, setWCentrality] = useState(1.0)
+  const [wWarrant, setWWarrant] = useState(3.0)
+  const [priorityScores, setPriorityScores] = useState(null)
+  const [priorityPending, setPriorityPending] = useState(false)
+  const [priorityError, setPriorityError] = useState(null)
+  const [priorityMode, setPriorityMode] = useState('')
+  const [hotspotsData, setHotspotsData] = useState(null)
+  const [hotspotsPending, setHotspotsPending] = useState(false)
+  const [hotspotsError, setHotspotsError] = useState(null)
+  const [hotspotsMode, setHotspotsMode] = useState('')
+
   // Target case (CASE-001)
   const targetCase = {
     case_id: "CASE-001",
@@ -140,6 +154,13 @@ export default function App() {
       setLoading(false)
     }
   }, [])
+
+  useEffect(() => {
+    if (activeTab === 'analytics' && isAuthenticated) {
+      if (!priorityScores) runPriorityScoring()
+      if (!hotspotsData) runHotspotClustering()
+    }
+  }, [activeTab, isAuthenticated])
 
   const handleLogout = () => {
     if (window.catalyst && window.catalyst.auth) {
@@ -360,6 +381,66 @@ export default function App() {
       })
   }
 
+  const runPriorityScoring = () => {
+    setPriorityScores(null)
+    setPriorityError(null)
+    setPriorityPending(true)
+
+    fetch('/server/graph_fn/priority', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        w_recency: wRecency,
+        w_severity: wSeverity,
+        w_centrality: wCentrality,
+        w_warrant: wWarrant
+      })
+    })
+      .then(async resp => {
+        const data = await resp.json()
+        setPriorityPending(false)
+        if (resp.status === 200) {
+          setPriorityScores(data.scores)
+          setPriorityMode(data.mode)
+        } else {
+          setPriorityError(data.error || `HTTP Error ${resp.status}`)
+        }
+      })
+      .catch(err => {
+        setPriorityPending(false)
+        setPriorityError(err.message || 'Network error')
+      })
+  }
+
+  const runHotspotClustering = () => {
+    setHotspotsData(null)
+    setHotspotsError(null)
+    setHotspotsPending(true)
+
+    fetch('/server/graph_fn/hotspots', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+      .then(async resp => {
+        const data = await resp.json()
+        setHotspotsPending(false)
+        if (resp.status === 200) {
+          setHotspotsData(data.hotspots)
+          setHotspotsMode(data.mode)
+        } else {
+          setHotspotsError(data.error || `HTTP Error ${resp.status}`)
+        }
+      })
+      .catch(err => {
+        setHotspotsPending(false)
+        setHotspotsError(err.message || 'Network error')
+      })
+  }
+
   const renderSVGGraph = () => {
     if (!graphData || !graphData.nodes || graphData.nodes.length === 0) return null;
     
@@ -545,6 +626,21 @@ export default function App() {
           }}
         >
           Graph Relations (GDS)
+        </button>
+        <button 
+          onClick={() => setActiveTab('analytics')} 
+          style={{
+            padding: '10px 20px',
+            border: 'none',
+            borderBottom: activeTab === 'analytics' ? '3px solid #2563eb' : 'none',
+            background: activeTab === 'analytics' ? '#eff6ff' : '#f3f4f6',
+            color: activeTab === 'analytics' ? '#1e40af' : '#4b5563',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            borderRadius: '4px 4px 0 0'
+          }}
+        >
+          Analytics &amp; Priority
         </button>
       </div>
 
@@ -923,6 +1019,148 @@ export default function App() {
                 </table>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Analytics & Priority panel */}
+      {activeTab === 'analytics' && (
+        <div style={{ border: '1px solid #ddd', padding: '20px', borderRadius: '0 0 8px 8px' }}>
+          <h2>QuickML Suspect Priority & Hotspot Scoring</h2>
+          <p style={{ color: '#555' }}>Configure linear weights to calculate and inspect auditable priority scores for suspects, alongside density-based spatial hotspots.</p>
+
+          {/* Sliders and Controls */}
+          <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', padding: '15px', borderRadius: '6px', marginBottom: '20px' }}>
+            <h3>Score Weight Settings (Adjustable)</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '15px' }}>
+              <div>
+                <label style={{ display: 'block', fontWeight: 'bold', fontSize: '13px' }}>Recency Weight ({wRecency}):</label>
+                <input 
+                  type="range" min="0" max="5" step="0.5" 
+                  value={wRecency} 
+                  onChange={e => setWRecency(parseFloat(e.target.value))} 
+                  style={{ width: '100%' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontWeight: 'bold', fontSize: '13px' }}>Severity Weight ({wSeverity}):</label>
+                <input 
+                  type="range" min="0" max="5" step="0.5" 
+                  value={wSeverity} 
+                  onChange={e => setWSeverity(parseFloat(e.target.value))} 
+                  style={{ width: '100%' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontWeight: 'bold', fontSize: '13px' }}>Centrality Weight ({wCentrality}):</label>
+                <input 
+                  type="range" min="0" max="5" step="0.5" 
+                  value={wCentrality} 
+                  onChange={e => setWCentrality(parseFloat(e.target.value))} 
+                  style={{ width: '100%' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontWeight: 'bold', fontSize: '13px' }}>Warrant Weight ({wWarrant}):</label>
+                <input 
+                  type="range" min="0" max="5" step="0.5" 
+                  value={wWarrant} 
+                  onChange={e => setWWarrant(parseFloat(e.target.value))} 
+                  style={{ width: '100%' }}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button 
+                onClick={runPriorityScoring} 
+                disabled={priorityPending}
+                style={{ padding: '8px 16px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                {priorityPending ? 'Calculating...' : 'Recalculate Priority Scores'}
+              </button>
+              <button 
+                onClick={runHotspotClustering} 
+                disabled={hotspotsPending}
+                style={{ padding: '8px 16px', background: '#10b981', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                {hotspotsPending ? 'Clustering...' : 'Refresh Hotspots'}
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+            {/* Priority Scores List */}
+            <div style={{ flex: '1 1 500px' }}>
+              <h3>Suspect Priority Rankings ({priorityMode === 'mock' || priorityMode === 'seed_fallback' ? 'Seed Fallback' : 'Live Mode'})</h3>
+              {priorityError && (
+                <div style={{ padding: '10px', background: '#fee2e2', border: '1px solid #f87171', color: '#991b1b', borderRadius: '4px', marginBottom: '15px' }}>
+                  {priorityError}
+                </div>
+              )}
+              {priorityScores && (
+                <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #ddd' }}>
+                  <thead>
+                    <tr style={{ background: '#f3f4f6' }}>
+                      <th style={{ padding: '8px', border: '1px solid #ddd' }}>Rank</th>
+                      <th style={{ padding: '8px', border: '1px solid #ddd' }}>Suspect Name</th>
+                      <th style={{ padding: '8px', border: '1px solid #ddd' }}>Score</th>
+                      <th style={{ padding: '8px', border: '1px solid #ddd' }}>Mathematical Breakdown</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {priorityScores.map((row, idx) => (
+                      <tr key={row.canonical_id} style={{ background: idx % 2 === 0 ? '#f8fafc' : '#ffffff' }}>
+                        <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 'bold' }}>{idx + 1}</td>
+                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                          <strong>{row.name}</strong> <br />
+                          <span style={{ fontSize: '11px', color: '#666', fontFamily: 'monospace' }}>{row.canonical_id}</span>
+                        </td>
+                        <td style={{ padding: '8px', border: '1px solid #ddd', fontWeight: 'bold', color: '#b91c1c', textAlign: 'center' }}>
+                          {row.total_score}
+                        </td>
+                        <td style={{ padding: '8px', border: '1px solid #ddd', fontSize: '12px' }}>
+                          <div style={{ fontFamily: 'monospace' }}>
+                            ({wRecency}×{row.breakdown.recency}) + ({wSeverity}×{row.breakdown.severity}) + ({wCentrality}×{row.breakdown.centrality}) + ({wWarrant}×{row.breakdown.warrant})
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
+                            Priors: {row.variables.prior_cases} · Co-Accused: {row.variables.co_accused_count} · Active Warrant: {row.variables.has_active_warrant ? 'Yes' : 'No'}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* Hotspots Density List */}
+            <div style={{ flex: '1 1 350px' }}>
+              <h3>AutoML Crime Hotspots ({hotspotsMode === 'mock' || hotspotsMode === 'seed_fallback' ? 'Seed Fallback' : 'Live Mode'})</h3>
+              {hotspotsError && (
+                <div style={{ padding: '10px', background: '#fee2e2', border: '1px solid #f87171', color: '#991b1b', borderRadius: '4px', marginBottom: '15px' }}>
+                  {hotspotsError}
+                </div>
+              )}
+              {hotspotsData && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {hotspotsData.map(h => (
+                    <div key={h.cluster_id} style={{ border: '1px solid #e5e7eb', borderRadius: '6px', padding: '12px', background: '#fff' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <strong style={{ color: '#1e3a8a' }}>📍 {h.cluster_id}</strong>
+                        <span style={{ background: '#fef3c7', color: '#d97706', padding: '2px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
+                          {h.density} incidents
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '13px', color: '#374151' }}>
+                        <strong>Centroid:</strong> {h.latitude}, {h.longitude} <br />
+                        <strong>Primary Crime Type:</strong> {h.primary_crime} <br />
+                        <strong>Cases Included:</strong> <span style={{ fontFamily: 'monospace' }}>{h.case_ids.join(', ')}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
