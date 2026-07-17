@@ -9,7 +9,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from repositories import CatalystRepository
-from routers import gateway_fn, entity_resolution_fn, case_twin_fn, intent_router_fn, graph_fn
+from routers import gateway_fn, entity_resolution_fn, case_twin_fn, intent_router_fn, graph_fn, export_fn
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -90,6 +90,7 @@ app.include_router(entity_resolution_fn.router)
 app.include_router(case_twin_fn.router)
 app.include_router(intent_router_fn.router)
 app.include_router(graph_fn.router)
+app.include_router(export_fn.router)  # SmartBrowz PDF export (own_case_detail)
 
 # 6. Apply Rate Limiting to critical routers/endpoints
 # Rate limit entity resolution to 30 requests per minute
