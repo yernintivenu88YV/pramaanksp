@@ -111,3 +111,14 @@ if os.path.exists(static_dir):
     logger.info("Serving compiled React client dynamically from appsail/static")
 else:
     logger.warning("Compiled static client folder (appsail/static) not found. Dynamic frontend UI will not be served.")
+
+if __name__ == "__main__":
+    import uvicorn
+    # Bind to X_ZOHO_CATALYST_LISTEN_PORT provided by the platform
+    port_val = os.environ.get("X_ZOHO_CATALYST_LISTEN_PORT") or os.environ.get("PORT") or "8000"
+    try:
+        port = int(port_val)
+    except ValueError:
+        port = 8000
+    logger.info(f"Starting uvicorn programmatically on port {port}")
+    uvicorn.run("app:app", host="0.0.0.0", port=port)

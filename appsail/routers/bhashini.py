@@ -1,3 +1,21 @@
+"""
+bhashini.py
+
+Thin Bhashini (bhashini.gov.in / ULCA + Dhruva) client for voice I/O:
+speech-to-text (ASR) in, text-to-speech (TTS) out, for Kannada and English.
+
+This is a VOICE LAYER ONLY -- it converts speech<->text and hands the text to
+the EXISTING intent_router /route path. It never reasons over the text and
+NEVER translates Kannada to English: a Kannada utterance is transcribed as
+Kannada and routed as Kannada, the same project-wide decision enforced in
+intent_router_fn (queries) and case_twin_fn (narratives). Do not "simplify"
+this into a transcribe-then-translate pipeline.
+
+Graceful degradation, matching graph_fn's Neo4j-optional posture: without
+Bhashini credentials every call returns mode="mock" instead of raising, so the
+UI still works end-to-end. Live ASR/TTS needs a real key (free PoC tier) via
+environment variables -- never hardcoded. See VOICE_SETUP.md.
+"""
 import os
 import logging
 import requests

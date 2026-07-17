@@ -53,6 +53,15 @@ CREATE TABLE Case (
     date_time           TIMESTAMP NOT NULL,
     status              VARCHAR(30) NOT NULL,
     narrative_text       TEXT,
+    -- Precomputed multilingual narrative vector (JSON array of floats),
+    -- written at ingestion by case_twin_fn.embed_narrative(). Lets the
+    -- matcher score with numpy alone instead of loading the embedding model
+    -- per request. The narrative is embedded in its ORIGINAL language
+    -- (Kannada stays Kannada) -- never translate before embedding.
+    -- Nullable: if absent, matching embeds on the fly, then falls back to
+    -- TF-IDF. Re-embed whenever narrative_text changes.
+    narrative_embedding  TEXT,
+    embedding_model      VARCHAR(80),            -- e.g. krutrim-ai-labs/Vyakyarth
     location_id          VARCHAR(40)             -- references Location.location_id
 );
 

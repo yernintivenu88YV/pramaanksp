@@ -135,6 +135,66 @@ def call_llm(query: str, gemini_key: str = None, anthropic_key: str = None) -> d
 
     raise ValueError("No LLM API keys provided.")
 
+def _extract_cited_ids(result: dict) -> list:
+    """
+    Record IDs the answer is grounded in -- the evidence-composer rule is
+    that cited_record_ids is never empty for a real answer (see
+    ConversationLog in data_store_schema.sql). Best-effort per intent; the
+    intent name itself is the last-resort citation.
+    """
+    cited = []
+    intent = result.get("intent")
+    cls = result.get("classification") or {}
+    resp = result.get("response") if isinstance(result.get("response"), dict) else {}
+
+    if intent == "case-similarity-search":
+        if cls.get("case_similarity_target_id"):
+            cited.append(cls["case_similarity_target_id"])
+        for m in (resp.get("top_matches") or []):
+            cited.append(m.get("case_id"))
+        for m in (resp.get("flagged_linkages") or []):
+            cited.append(m.get("case_id"))
+    elif intent == "graph-network-query":
+        if cls.get("graph_query_canonical_id"):
+            cited.append(cls["graph_query_canonical_id"])
+        for n in (resp.get("nodes") or []):
+            cited.append(n.get("id"))
+    elif intent == "entity-lookup":
+        for key in ("entity_lookup_record_a", "entity_lookup_record_b"):
+            rec = cls.get(key) or {}
+            if rec.get("source_id"):
+                cited.append(rec["source_id"])
+        if resp.get("canonical_id"):
+            cited.append(resp["canonical_id"])
+
+    cited = list(dict.fromkeys(c for c in cited if c))
+    return cited or ([intent] if intent else [])
+
+
+def _log_conversation(request: Request, query_text: str, result: dict):
+    """
+    Persist one ConversationLog row per answered query. This feeds the
+    conversation-history PDF export (export_fn); logging failures must never
+    break the answer itself, so this swallows and reports its own errors.
+    """
+    try:
+        repo = request.state.repo
+        headers = dict(request.headers)
+        session_id = (headers.get("x-zc-session-id")
+                      or headers.get("cookie")
+                      or "session-unknown")
+        repo.insert_conversation_log(
+            session_id=session_id,
+            user_id=repo.get_user_id(headers),
+            role=repo.get_user_role(headers),
+            query_text=query_text,
+            response_text=json.dumps(result, ensure_ascii=False, default=str)[:4000],
+            cited_record_ids=json.dumps(_extract_cited_ids(result), ensure_ascii=False),
+        )
+    except Exception as e:
+        logger.error(f"Conversation logging failed (answer unaffected): {e}")
+
+
 def _speech_summary(route_json: dict) -> str:
     if not isinstance(route_json, dict) or route_json.get("error"):
         return "Sorry, that request could not be completed."
@@ -201,13 +261,15 @@ def route(req: RouteRequest, request: Request):
         
         payload = {"record_a": rec_a, "record_b": rec_b}
         resp = requests.post(f"{base_url}/server/entity_resolution_fn/resolve", json=payload, headers=headers, timeout=10)
-        
-        return {
+
+        result = {
             "intent": "entity-lookup",
             "classification": classification,
             "status_code": resp.status_code,
             "response": resp.json() if resp.status_code == 200 else resp.text
         }
+        _log_conversation(request, req.query, result)
+        return result
         
     elif intent == "case-similarity-search":
         target_id = classification.get("case_similarity_target_id")
@@ -267,13 +329,15 @@ def route(req: RouteRequest, request: Request):
             "top_k": top_k
         }
         resp = requests.post(f"{base_url}/server/case_twin_fn/match", json=payload, headers=headers, timeout=15)
-        
-        return {
+
+        result = {
             "intent": "case-similarity-search",
             "classification": classification,
             "status_code": resp.status_code,
             "response": resp.json() if resp.status_code == 200 else resp.text
         }
+        _log_conversation(request, req.query, result)
+        return result
         
     elif intent == "graph-network-query":
         canonical_id = classification.get("graph_query_canonical_id")
@@ -289,14 +353,16 @@ def route(req: RouteRequest, request: Request):
         payload = {"canonical_id": canonical_id}
         resp = requests.post(f"{base_url}/server/graph_fn/traverse", json=payload, headers=headers, timeout=15)
         resp_json = resp.json() if resp.status_code == 200 else {}
-        
-        return {
+
+        result = {
             "intent": "graph-network-query",
             "mode": resp_json.get("mode", "unknown"),
             "classification": classification,
             "status_code": resp.status_code,
             "response": resp_json if resp.status_code == 200 else resp.text
         }
+        _log_conversation(request, req.query, result)
+        return result
         
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,

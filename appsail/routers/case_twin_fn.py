@@ -27,6 +27,9 @@ class CaseRecordModel(BaseModel):
     date_time: str  # ISO string or standard datetime string
     weapon: Optional[str] = None
     canonical_suspect_ids: List[str] = []
+    # Precomputed narrative vector (see embed_narrative). When present for
+    # both sides, matching needs numpy only -- no model load at request time.
+    narrative_embedding: Optional[List[float]] = None
 
 class MatchRequest(BaseModel):
     target: CaseRecordModel
@@ -44,6 +47,7 @@ class CaseRecord:
     date_time: datetime
     weapon: Optional[str] = None
     canonical_suspect_ids: List[str] = field(default_factory=list)
+    narrative_embedding: Optional[List[float]] = None
 
 def _get_embed_model():
     global _embed_model, _embed_unavailable
@@ -63,6 +67,40 @@ def _tfidf_narrative_similarity(a_text: str, b_text: str) -> float:
     vec = TfidfVectorizer().fit([a_text, b_text])
     vectors = vec.transform([a_text, b_text])
     return float(cosine_similarity(vectors[0], vectors[1])[0][0])
+
+
+def _cosine(v1: List[float], v2: List[float]) -> float:
+    """Cosine between two stored vectors. numpy only -- no torch, no model."""
+    import numpy as np
+    a = np.asarray(v1, dtype=float)
+    b = np.asarray(v2, dtype=float)
+    na, nb = np.linalg.norm(a), np.linalg.norm(b)
+    if na == 0.0 or nb == 0.0:
+        return 0.0
+    return float(np.dot(a, b) / (na * nb))
+
+
+def embed_narrative(text: str) -> Optional[List[float]]:
+    """
+    Compute a narrative vector ONCE, at ingestion time, so match-time stays
+    cheap (see narrative_similarity tier 1). Store the result on the case
+    record / Data Store `narrative_embedding` column.
+
+    Kannada text is embedded AS KANNADA -- do not translate first.
+    Returns None if the model can't be loaded, in which case matching falls
+    back to on-the-fly embedding or TF-IDF and nothing breaks.
+    """
+    text = (text or "").strip()
+    if not text:
+        return None
+    model = _get_embed_model()
+    if model is None:
+        return None
+    try:
+        return model.encode(text, normalize_embeddings=True).tolist()
+    except Exception as e:
+        logger.warning(f"embed_narrative failed ({e}); no vector stored.")
+        return None
 
 def haversine_km(lat1, lon1, lat2, lon2) -> float:
     R = 6371.0
@@ -94,11 +132,36 @@ def weapon_similarity(a: CaseRecord, b: CaseRecord) -> float:
     return 1.0 if a.weapon.lower() == b.weapon.lower() else 0.0
 
 def narrative_similarity(a: CaseRecord, b: CaseRecord) -> float:
+    """
+    Similarity between two case narratives, in [0.0, 1.0].
+
+    DO NOT TRANSLATE before comparing. Kannada narratives are embedded and
+    compared IN KANNADA -- the multilingual model (Vyakyarth) shares one
+    vector space across languages, so a Kannada narrative and its English
+    twin land near each other with no translate-then-process step. This
+    mirrors the decision already made in intent_router_fn for queries. If a
+    future pass is tempted to "simplify" this into translate-to-English-
+    first: don't -- that reintroduces MT error and loses Kannada police idiom.
+
+    Three tiers, in order:
+      1. Precomputed vectors on both sides -> numpy cosine (no model load).
+         This is the intended production path; vectors are built at ingestion
+         by embed_narrative() and stored on the case record.
+      2. No stored vectors -> embed on the fly with the model.
+      3. Model unavailable -> TF-IDF cosine. Lexical overlap only; it does
+         NOT handle Kannada<->English or synonymy, so it is an availability
+         safety net, not an equivalent substitute.
+    """
+    # Tier 1: precomputed vectors -- cheap, and the reason ingestion embeds.
+    if a.narrative_embedding and b.narrative_embedding:
+        return max(0.0, min(1.0, _cosine(a.narrative_embedding, b.narrative_embedding)))
+
     a_text = (a.narrative_text or "").strip()
     b_text = (b.narrative_text or "").strip()
     if not a_text or not b_text:
         return 0.0
 
+    # Tier 2: embed on the fly.
     model = _get_embed_model()
     if model is not None:
         try:
@@ -108,6 +171,7 @@ def narrative_similarity(a: CaseRecord, b: CaseRecord) -> float:
         except Exception as e:
             logger.warning(f"Embedding similarity failed ({e}); using TF-IDF.")
 
+    # Tier 3: lexical fallback.
     return _tfidf_narrative_similarity(a_text, b_text)
 
 def shared_suspect_score(a: CaseRecord, b: CaseRecord) -> float:
@@ -149,7 +213,8 @@ def match(req: MatchRequest, request: Request):
         longitude=req.target.longitude,
         date_time=parse_iso_datetime(req.target.date_time),
         weapon=req.target.weapon,
-        canonical_suspect_ids=req.target.canonical_suspect_ids
+        canonical_suspect_ids=req.target.canonical_suspect_ids,
+        narrative_embedding=req.target.narrative_embedding
     )
     
     candidates = []
@@ -163,7 +228,8 @@ def match(req: MatchRequest, request: Request):
             longitude=c.longitude,
             date_time=parse_iso_datetime(c.date_time),
             weapon=c.weapon,
-            canonical_suspect_ids=c.canonical_suspect_ids
+            canonical_suspect_ids=c.canonical_suspect_ids,
+            narrative_embedding=c.narrative_embedding
         ))
         
     scores = []

@@ -99,8 +99,19 @@ invalid model id falls back and the ranking still holds). Practical caveat:
 `torch` + Vyakyarth is heavy for a Catalyst Advanced I/O package, and the
 weights download on first cold start.
 
-Recommended production shape (follow-up, not built here): **precompute narrative
-embeddings at ingestion**, store the vectors, and have `case_twin_fn` compute
-cosine on stored vectors at match time (numpy only — no torch in the function).
-The target narrative is embedded once per request via the same model host. This
-keeps the matching function lean while keeping embeddings as the real signal.
+**Precompute is now implemented** on the deployed AppSail path:
+
+- `appsail/routers/case_twin_fn.py` → `embed_narrative()` builds the vector;
+  `narrative_similarity()` scores in three tiers — (1) stored vectors via numpy
+  cosine (no model load), (2) on-the-fly embedding, (3) TF-IDF fallback.
+- `appsail/backfill_embeddings.py` → run at ingestion / when `narrative_text`
+  changes (`--all` re-embeds, `--dry-run` reports only). Idempotent.
+- `schema/data_store_schema.sql` → `Case.narrative_embedding` (JSON array) +
+  `Case.embedding_model`; `repositories.store_case_embedding()` persists them.
+
+Verified: with `narrative_text` blanked and only stored vectors supplied, the
+scores are identical to the on-the-fly path (Kannada twin 0.8341, non-match
+0.2459, 768-dim), proving the stored vector — not the text — drives the score.
+
+> Note: this doc lives in the legacy `functions/` tree. The deployed backend is
+> `appsail/` (see `catalyst.json`). The model choice above applies to both.

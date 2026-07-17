@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from datetime import datetime, timezone
@@ -5,6 +6,19 @@ import zcatalyst_sdk
 
 logger = logging.getLogger("appsail.repository")
 logger.setLevel(logging.INFO)
+
+
+def _parse_embedding(raw):
+    """Data Store holds the narrative vector as a JSON array string."""
+    if not raw:
+        return None
+    if isinstance(raw, list):
+        return raw
+    try:
+        vec = json.loads(raw)
+        return vec if isinstance(vec, list) and vec else None
+    except Exception:
+        return None
 
 # Structured mock/seed fallback data matching data_store_schema.sql
 MOCK_PERSONS = [
@@ -84,6 +98,11 @@ class CatalystRepository:
     def __init__(self):
         self.app = None
         self._is_fallback = False
+        # In-memory stores backing fallback mode, so conversation logging and
+        # the audit trail stay exercisable (and testable) without a live
+        # Data Store. Live mode writes the real tables instead.
+        self._conversation_fallback = []
+        self._audit_fallback = []
         try:
             # Attempt to initialize Catalyst SDK
             self.app = zcatalyst_sdk.initialize()
@@ -130,8 +149,9 @@ class CatalystRepository:
         
         if self._is_fallback:
             logger.info(f"[FALLBACK AUDIT LOG] {row_data}")
+            self._audit_fallback.append(row_data)
             return
-            
+
         try:
             db = self.app.datastore()
             table = db.table("AccessAuditLog")
@@ -139,6 +159,78 @@ class CatalystRepository:
             logger.info(f"Audit log inserted: {row_data}")
         except Exception as e:
             logger.error(f"Failed to insert audit log in Catalyst Data Store: {e}")
+
+    def fetch_audit_logs(self, limit: int = 50):
+        """Recent access-audit rows -- the dossier's chain-of-access section."""
+        if self._is_fallback:
+            return self._audit_fallback[-limit:]
+        try:
+            zcql = self.app.zcql()
+            rows = zcql.execute_query(
+                f"SELECT session_id, role, resource, decision, timestamp "
+                f"FROM AccessAuditLog LIMIT {int(limit)}")
+            return [r.get("AccessAuditLog") for r in rows if r.get("AccessAuditLog")]
+        except Exception as e:
+            logger.error(f"Failed to fetch audit logs: {e}")
+            return []
+
+    def get_user_id(self, request_headers: dict) -> str:
+        if self._is_fallback:
+            return "local-user"
+        try:
+            current_user = self.app.authentication().get_current_user()
+            if current_user:
+                return str(current_user.get("user_id") or current_user.get("email_id") or "unknown-user")
+        except Exception as e:
+            logger.error(f"Authentication user-id check failed: {e}")
+        return "unknown-user"
+
+    def insert_conversation_log(self, session_id: str, user_id: str, role: str,
+                                query_text: str, response_text: str,
+                                cited_record_ids: str):
+        """
+        One row per answered query (schema: ConversationLog). This is what
+        makes the conversation-history PDF export possible; the evidence-
+        composer rule is that cited_record_ids is never empty for a real
+        answer.
+        """
+        utc_now = datetime.now(timezone.utc).replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S')
+        row_data = {
+            "session_id": (session_id or "unknown-session")[:40],
+            "user_id": (user_id or "unknown-user")[:40],
+            "role": role,
+            "query_text": query_text,
+            "response_text": response_text,
+            "cited_record_ids": cited_record_ids,
+            "timestamp": utc_now,
+        }
+        if self._is_fallback:
+            logger.info(f"[FALLBACK CONVERSATION LOG] session={row_data['session_id']} "
+                        f"role={role} cited={cited_record_ids}")
+            self._conversation_fallback.append(row_data)
+            return
+        try:
+            self.app.datastore().table("ConversationLog").insert_row(row_data)
+            logger.info(f"Conversation log inserted for session {row_data['session_id']}")
+        except Exception as e:
+            logger.error(f"Failed to insert conversation log: {e}")
+
+    def fetch_conversation_log(self, session_id: str = None, limit: int = 200):
+        if self._is_fallback:
+            rows = self._conversation_fallback
+            if session_id:
+                rows = [r for r in rows if r.get("session_id") == session_id]
+            return rows[-limit:]
+        try:
+            zcql = self.app.zcql()
+            where = f" WHERE session_id = '{session_id}'" if session_id else ""
+            rows = zcql.execute_query(
+                f"SELECT session_id, user_id, role, query_text, response_text, "
+                f"cited_record_ids, timestamp FROM ConversationLog{where} LIMIT {int(limit)}")
+            return [r.get("ConversationLog") for r in rows if r.get("ConversationLog")]
+        except Exception as e:
+            logger.error(f"Failed to fetch conversation log: {e}")
+            return []
 
     def fetch_persons(self):
         if self._is_fallback:
@@ -156,7 +248,7 @@ class CatalystRepository:
             return MOCK_CASES
         try:
             zcql = self.app.zcql()
-            rows = zcql.execute_query("SELECT case_id, crime_type, modus_operandi, narrative_text, latitude, longitude, date_time FROM Case")
+            rows = zcql.execute_query("SELECT case_id, crime_type, modus_operandi, narrative_text, narrative_embedding, latitude, longitude, date_time FROM Case")
             res = []
             for r in rows:
                 c = r.get("Case")
@@ -168,6 +260,8 @@ class CatalystRepository:
                         "crime_type": c.get("crime_type"),
                         "modus_operandi": c.get("modus_operandi"),
                         "narrative_text": c.get("narrative_text"),
+                        # Precomputed vector, stored as a JSON array string.
+                        "narrative_embedding": _parse_embedding(c.get("narrative_embedding")),
                         "latitude": float(c.get("latitude")) if c.get("latitude") else None,
                         "longitude": float(c.get("longitude")) if c.get("longitude") else None,
                         "date_time": c.get("date_time")
@@ -176,6 +270,31 @@ class CatalystRepository:
         except Exception as e:
             logger.error(f"Failed to fetch cases from Catalyst Data Store: {e}")
             return MOCK_CASES
+
+    def store_case_embedding(self, case_id: str, vector: list, model_id: str):
+        """
+        Persist a narrative vector computed at ingestion (see
+        case_twin_fn.embed_narrative). Idempotent: re-running overwrites.
+        """
+        if self._is_fallback:
+            logger.info(f"[FALLBACK] would store {len(vector)}-dim vector for {case_id} ({model_id})")
+            return
+        try:
+            zcql = self.app.zcql()
+            rows = zcql.execute_query(f"SELECT ROWID FROM Case WHERE case_id = '{case_id}'")
+            if not rows:
+                logger.warning(f"store_case_embedding: no Case row for {case_id}")
+                return
+            row_id = rows[0]["Case"]["ROWID"]
+            table = self.app.datastore().table("Case")
+            table.update_row({
+                "ROWID": row_id,
+                "narrative_embedding": json.dumps(vector),
+                "embedding_model": model_id,
+            })
+            logger.info(f"Stored narrative embedding for {case_id} ({model_id})")
+        except Exception as e:
+            logger.error(f"Failed to store embedding for {case_id}: {e}")
 
     def fetch_links(self):
         if self._is_fallback:

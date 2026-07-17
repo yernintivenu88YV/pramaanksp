@@ -20,16 +20,29 @@ stages:
     jobs:
       - name: run_unit_tests
         steps:
-          - name: Entity Resolution Unit Tests
+          # The deployed backend is the unified AppSail app (see catalyst.json),
+          # so its suite is what gates a release. It covers RBAC, security
+          # headers, entity resolution, case-twin (English + Kannada), and the
+          # precomputed-embedding path.
+          - name: AppSail Unified API Tests (deployed backend)
+            cmd: |
+              cd appsail
+              pip install -r requirements.txt
+              python -m unittest test_appsail -v
+              cd ..
+          - name: Public Assistant Isolation Scanner (served path)
+            cmd: python appsail/static/public-assistant/test_isolation.py
+
+          # Legacy standalone-function tree. Not deployed by catalyst.json --
+          # kept green while it still exists; drop these once it is removed.
+          - name: Entity Resolution Unit Tests (legacy)
             cmd: python functions/entity_resolution_fn/test_entity_resolution.py
-          - name: Case Twin Unit Tests
+          - name: Case Twin Unit Tests (legacy)
             cmd: python functions/case_twin_fn/test_case_twin.py
-          - name: RBAC Gateway Unit Tests
+          - name: RBAC Gateway Unit Tests (legacy)
             cmd: python functions/gateway_fn/test_rbac.py
-          - name: GDS Graph & Priority Unit Tests
+          - name: GDS Graph & Priority Unit Tests (legacy)
             cmd: python functions/graph_fn/test_graph.py
-          - name: Public Assistant Isolation Scanner
-            cmd: python client/public-assistant/test_isolation.py
 
   - name: deploy_stage
     jobs:
