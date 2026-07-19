@@ -7,8 +7,11 @@ from typing import Optional, List
 from fastapi import APIRouter, Request, HTTPException, status
 from pydantic import BaseModel
 from rapidfuzz.distance import JaroWinkler
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+# NOTE: sklearn / sentence-transformers / torch / numpy are NOT imported at
+# module level. Importing them here made `from app import app` take ~15s,
+# which blew the AppSail startup port-bind window and 503'd the container.
+# They are imported lazily inside the functions that use them, so app import
+# stays fast and the first case-twin/dossier request pays the one-time cost.
 
 logger = logging.getLogger("appsail.case_twin")
 router = APIRouter(prefix="/server/case_twin_fn")
@@ -64,6 +67,10 @@ def _get_embed_model():
     return _embed_model
 
 def _tfidf_narrative_similarity(a_text: str, b_text: str) -> float:
+    # Lazy import: sklearn pulls scipy+numpy (~15s cold), so it must not load
+    # at app import time -- only when the TF-IDF fallback actually runs.
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.metrics.pairwise import cosine_similarity
     vec = TfidfVectorizer().fit([a_text, b_text])
     vectors = vec.transform([a_text, b_text])
     return float(cosine_similarity(vectors[0], vectors[1])[0][0])

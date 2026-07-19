@@ -2,7 +2,7 @@
   "stack": "python_3_12",
   "command": "python3 run_app.py",
   "buildPath": ".",
-  "memory": 1024,
+  "memory": 2048,
   "env": {
     "PYTHONUNBUFFERED": "1"
   }
