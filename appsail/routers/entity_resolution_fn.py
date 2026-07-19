@@ -4,6 +4,8 @@ import logging
 import re
 from typing import Optional, List
 from fastapi import APIRouter, Request, HTTPException, status
+
+from rate_limit import limiter
 from pydantic import BaseModel
 from rapidfuzz.distance import JaroWinkler
 
@@ -155,6 +157,7 @@ def health():
     return {"status": "ok", "module": "entity_resolution_fn"}
 
 @router.post("/resolve")
+@limiter.limit("30/minute")
 def resolve(req: ResolveRequest, request: Request):
     a = PersonRecord(
         source_id=req.record_a.source_id,

@@ -21,14 +21,28 @@ stages:
       - name: run_unit_tests
         steps:
           # The deployed backend is the unified AppSail app (see catalyst.json),
-          # so its suite is what gates a release. It covers RBAC, security
-          # headers, entity resolution, case-twin (English + Kannada), and the
-          # precomputed-embedding path.
-          - name: AppSail Unified API Tests (deployed backend)
+          # so its suite is what gates a release. Split into named steps so a
+          # regression in any area is visible by step name, not buried.
+          - name: AppSail Core API Tests (RBAC, ER, case-twin EN+KN, embeddings)
             cmd: |
               cd appsail
               pip install -r requirements.txt
-              python -m unittest test_appsail -v
+              python -m unittest test_appsail.AppSailUnifiedTests -v
+              cd ..
+          - name: Graph Analytics Tests (priority scoring + hotspots, hand-reproducible)
+            cmd: |
+              cd appsail
+              python -m unittest test_appsail.GraphAnalyticsTests -v
+              cd ..
+          - name: PDF Export Tests (ConversationLog + SmartBrowz dossier/conversation)
+            cmd: |
+              cd appsail
+              python -m unittest test_appsail.ExportTests -v
+              cd ..
+          - name: Rate Limit + Role Tests (limiter fires; Policy role string)
+            cmd: |
+              cd appsail
+              python -m unittest test_appsail.RateLimitAndRoleTests -v
               cd ..
           - name: Public Assistant Isolation Scanner (served path)
             cmd: python appsail/static/public-assistant/test_isolation.py

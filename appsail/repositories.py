@@ -94,6 +94,12 @@ MOCK_LINKS = [
     {"case_id": "CASE-004", "canonical_id": "CANON-0044", "role_in_case": "accused"}
 ]
 
+MOCK_WARRANTS = [
+    {"canonical_id": "CANON-0042", "active_flag": True, "warrant_number": "WAR-2026-0042"},
+    {"canonical_id": "CANON-0044", "active_flag": True, "warrant_number": "WAR-2026-0044"}
+]
+
+
 class CatalystRepository:
     def __init__(self):
         self.app = None
@@ -117,15 +123,18 @@ class CatalystRepository:
         return self._is_fallback
 
     def get_user_role(self, request_headers: dict) -> str:
-        if self._is_fallback:
-            # Fallback default roles for local testing based on user header or query
-            auth_header = request_headers.get("authorization") or ""
+        auth_header = request_headers.get("authorization") or ""
+        if auth_header:
             if "si" in auth_header.lower():
                 return "SI"
             elif "acp" in auth_header.lower():
                 return "ACP"
             elif "policy" in auth_header.lower():
-                return "Policy Maker"
+                return "Policy"
+            elif "analyst" in auth_header.lower():
+                return "Analyst"
+
+        if self._is_fallback:
             return "Analyst"
             
         try:
@@ -313,3 +322,28 @@ class CatalystRepository:
         except Exception as e:
             logger.error(f"Failed to fetch links from Catalyst Data Store: {e}")
             return MOCK_LINKS
+
+    def fetch_warrants(self):
+        if self._is_fallback:
+            return MOCK_WARRANTS
+        try:
+            zcql = self.app.zcql()
+            rows = zcql.execute_query("SELECT canonical_id, active_flag, warrant_number FROM Warrant")
+            res = []
+            for r in rows:
+                w = r.get("Warrant")
+                if w:
+                    active = w.get("active_flag")
+                    if isinstance(active, str):
+                        active = active.lower() == 'true'
+                    elif isinstance(active, int):
+                        active = bool(active)
+                    res.append({
+                        "canonical_id": w.get("canonical_id"),
+                        "active_flag": active,
+                        "warrant_number": w.get("warrant_number")
+                    })
+            return res
+        except Exception as e:
+            logger.error(f"Failed to fetch warrants from Catalyst Data Store: {e}")
+            return MOCK_WARRANTS

@@ -253,6 +253,8 @@ def priority(req: PriorityRequest, request: Request):
     links = repo.fetch_links()
     cases_list = repo.fetch_cases()
     persons_list = repo.fetch_persons()
+    warrants = repo.fetch_warrants()
+    active_warrants = {w["canonical_id"] for w in warrants if w.get("active_flag")}
     
     # Map raw lists
     cases = {}
@@ -329,7 +331,7 @@ def priority(req: PriorityRequest, request: Request):
         severity_score = max_severity
         degree = len(case_ids) + len(co_accused_map.get(c_id, []))
         centrality_score = min(1.0, degree / 5.0)
-        warrant_score = 1.0 if c_id in ("CANON-0042", "CANON-0044") else 0.0
+        warrant_score = 1.0 if c_id in active_warrants else 0.0
         
         total = (req.w_recency * recency_score +
                  req.w_severity * severity_score +

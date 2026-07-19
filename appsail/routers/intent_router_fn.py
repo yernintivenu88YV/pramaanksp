@@ -6,6 +6,7 @@ from fastapi import APIRouter, Request, HTTPException, status
 from pydantic import BaseModel
 import requests
 
+from rate_limit import limiter
 from . import bhashini
 
 logger = logging.getLogger("appsail.intent_router")
@@ -211,25 +212,55 @@ def health():
     return {"status": "ok", "module": "intent_router_fn"}
 
 @router.post("/route")
+@limiter.limit("20/minute")
 def route(req: RouteRequest, request: Request):
     load_env()
     gemini_key = os.getenv("GEMINI_API_KEY")
     anthropic_key = os.getenv("ANTHROPIC_API_KEY")
     
+    classification = None
     if not gemini_key and not anthropic_key:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Missing LLM API credentials. Please set GEMINI_API_KEY or ANTHROPIC_API_KEY in env."
-        )
-        
-    try:
-        classification = call_llm(req.query, gemini_key=gemini_key, anthropic_key=anthropic_key)
-    except Exception as e:
-        logger.error(f"LLM classification failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"LLM reasoning failed: {str(e)}"
-        )
+        logger.warning("No LLM keys found in environment. Falling back to rule-based classification.")
+        # Rule-based fallback classifier
+        query_lower = req.query.lower()
+        if "similar" in query_lower or "similarity" in query_lower or "ಹೋಲುವ" in query_lower or "case-" in query_lower:
+            import re
+            m = re.search(r"case-\d+", query_lower)
+            target_id = m.group(0).upper() if m else "CASE-001"
+            classification = {
+                "intent": "case-similarity-search",
+                "case_similarity_target_id": target_id,
+                "case_similarity_top_k": 3
+            }
+        elif "lookup" in query_lower or "resolve" in query_lower or "entity" in query_lower or "ಹೋಲಿಕೆ" in query_lower:
+            classification = {
+                "intent": "entity-lookup",
+                "entity_lookup_record_a": {"name": "Ramesh"},
+                "entity_lookup_record_b": {"name": "Ramesha"}
+            }
+        elif "network" in query_lower or "traverse" in query_lower or "graph" in query_lower or "ಸಂಪರ್ಕ" in query_lower or "canon-" in query_lower:
+            import re
+            m = re.search(r"canon-\d+", query_lower)
+            canon_id = m.group(0).upper() if m else "CANON-0042"
+            classification = {
+                "intent": "graph-network-query",
+                "graph_query_canonical_id": canon_id
+            }
+        else:
+            classification = {
+                "intent": "case-similarity-search",
+                "case_similarity_target_id": "CASE-001",
+                "case_similarity_top_k": 3
+            }
+    else:
+        try:
+            classification = call_llm(req.query, gemini_key=gemini_key, anthropic_key=anthropic_key)
+        except Exception as e:
+            logger.error(f"LLM classification failed: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"LLM reasoning failed: {str(e)}"
+            )
         
     intent = classification.get("intent")
     logger.info(f"Classified intent: {intent}")

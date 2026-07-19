@@ -1,3 +1,4 @@
+import json
 import math
 import unittest
 from datetime import datetime, timedelta
@@ -16,10 +17,11 @@ class FakeRepo:
     for hand-reproducibility assertions, which need known inputs.
     """
 
-    def __init__(self, persons=None, cases=None, links=None):
+    def __init__(self, persons=None, cases=None, links=None, warrants=None):
         self.persons = persons or []
         self.cases = cases or []
         self.links = links or []
+        self.warrants = warrants or []
         self.audit_rows = []
         self.conversation_rows = []
         self.app = None  # no live Catalyst -> SmartBrowz unavailable -> HTML fallback
@@ -73,6 +75,9 @@ class FakeRepo:
 
     def fetch_links(self):
         return self.links
+
+    def fetch_warrants(self):
+        return self.warrants
 
     def store_case_embedding(self, case_id, vector, model_id):
         pass
@@ -334,7 +339,11 @@ class GraphAnalyticsTests(unittest.TestCase):
             {"case_id": "HP-1", "canonical_id": "CANON-5555", "role_in_case": "accused"},
             {"case_id": "LP-1", "canonical_id": "CANON-7777", "role_in_case": "accused"},
         ]
-        self.fake_repo = FakeRepo(persons=persons, cases=cases, links=links)
+        warrants = [
+            {"canonical_id": "CANON-0042", "active_flag": True, "warrant_number": "WAR-1"},
+            {"canonical_id": "CANON-0044", "active_flag": True, "warrant_number": "WAR-2"}
+        ]
+        self.fake_repo = FakeRepo(persons=persons, cases=cases, links=links, warrants=warrants)
         self._orig_repo = app_module.repo
         app_module.repo = self.fake_repo
         self.client = TestClient(app)
@@ -470,6 +479,243 @@ class GraphAnalyticsTests(unittest.TestCase):
             "/server/graph_fn/hotspots",
             headers={"authorization": "Bearer role_Analyst"})
         self.assertEqual(resp.status_code, 200)
+
+
+class ExportTests(unittest.TestCase):
+    """
+    PDF export (SmartBrowz) coverage. Locally there are no Catalyst
+    credentials, so the contract under test is: ConversationLog rows are
+    actually written by /route (the audit found the table previously
+    unwritten by any code), the composed export is complete and correct,
+    and the endpoint declares its mode honestly via X-Pramaan-Export-Mode
+    (smartbrowz_pdf live, fallback_html_no_smartbrowz here) instead of
+    fabricating a PDF.
+    """
+
+    def setUp(self):
+        import repositories as repo_module
+        self.fake_repo = FakeRepo(
+            persons=list(repo_module.MOCK_PERSONS),
+            cases=list(repo_module.MOCK_CASES),
+            links=list(repo_module.MOCK_LINKS),
+            warrants=list(repo_module.MOCK_WARRANTS),
+        )
+        self._orig_repo = app_module.repo
+        app_module.repo = self.fake_repo
+        self.client = TestClient(app)
+
+    def tearDown(self):
+        app_module.repo = self._orig_repo
+
+    def test_route_writes_conversation_log(self):
+        """/route must persist a ConversationLog row with cited record IDs."""
+        from unittest import mock
+        from routers import intent_router_fn as ir
+
+        canned_classification = {
+            "intent": "case-similarity-search",
+            "case_similarity_target_id": "CASE-001",
+            "case_similarity_top_k": 2,
+        }
+
+        class _FakeDownstream:
+            status_code = 200
+            def json(self):
+                return {"top_matches": [{"case_id": "CASE-002"}],
+                        "flagged_linkages": [{"case_id": "CASE-005"}]}
+
+        with mock.patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}), \
+             mock.patch.object(ir, "call_llm", return_value=canned_classification), \
+             mock.patch.object(ir.requests, "post", return_value=_FakeDownstream()):
+            resp = self.client.post(
+                "/server/intent_router_fn/route",
+                json={"query": "CASE-001 ಗೆ ಹೋಲುವ ಕಳ್ಳತನ ಪ್ರಕರಣಗಳನ್ನು ಹುಡುಕಿ"},
+                headers={"authorization": "Bearer role_SI",
+                         "x-zc-session-id": "session-test-77"})
+
+        self.assertEqual(resp.status_code, 200)
+        rows = self.fake_repo.conversation_rows
+        self.assertEqual(len(rows), 1, "exactly one ConversationLog row per answered query")
+        row = rows[0]
+        self.assertEqual(row["session_id"], "session-test-77")
+        self.assertEqual(row["role"], "SI")
+        self.assertIn("ಹೋಲುವ ಕಳ್ಳತನ", row["query_text"])  # Kannada preserved verbatim
+        cited = json.loads(row["cited_record_ids"])
+        # Evidence-composer rule: the answer's grounding records are cited.
+        self.assertIn("CASE-001", cited)
+        self.assertIn("CASE-002", cited)
+        self.assertIn("CASE-005", cited)
+
+    def test_conversation_pdf_export(self):
+        # Empty history must fail loudly, not produce a padded document.
+        resp = self.client.post(
+            "/server/export_fn/conversation_pdf", json={},
+            headers={"authorization": "Bearer role_SI"})
+        self.assertEqual(resp.status_code, 404)
+
+        # Seed two rows (one Kannada) and export.
+        self.fake_repo.insert_conversation_log(
+            session_id="session-test-77", user_id="local-test-user", role="SI",
+            query_text="Find similar burglary cases to CASE-001",
+            response_text="{}", cited_record_ids='["CASE-001", "CASE-002"]')
+        self.fake_repo.insert_conversation_log(
+            session_id="session-test-77", user_id="local-test-user", role="SI",
+            query_text="CANON-0042 ಜೊತೆ ಯಾರು ಸಂಪರ್ಕದಲ್ಲಿದ್ದಾರೆ?",
+            response_text="{}", cited_record_ids='["CANON-0042"]')
+
+        resp = self.client.post(
+            "/server/export_fn/conversation_pdf",
+            json={"session_id": "session-test-77"},
+            headers={"authorization": "Bearer role_SI"})
+        self.assertEqual(resp.status_code, 200)
+        # No Catalyst credentials here -> mode must say so, honestly.
+        self.assertEqual(resp.headers["X-Pramaan-Export-Mode"],
+                         "fallback_html_no_smartbrowz")
+        body = resp.text
+        self.assertIn("Find similar burglary cases to CASE-001", body)
+        self.assertIn("ಸಂಪರ್ಕದಲ್ಲಿದ್ದಾರೆ", body)   # Kannada rendered, not translated
+        self.assertIn("CASE-002", body)             # cited records printed
+        self.assertIn("Conversation History Export", body)
+
+    def test_dossier_pdf_export(self):
+        # RBAC: a dossier is person-level case data -- Analyst must be denied,
+        # and the denial itself must land in the audit trail.
+        resp = self.client.post(
+            "/server/export_fn/dossier_pdf", json={"case_id": "CASE-001"},
+            headers={"authorization": "Bearer role_Analyst"})
+        self.assertEqual(resp.status_code, 403)
+        self.assertTrue(any(a["decision"] == "deny" for a in self.fake_repo.audit_rows))
+
+        # Unknown case fails loudly.
+        resp = self.client.post(
+            "/server/export_fn/dossier_pdf", json={"case_id": "CASE-999"},
+            headers={"authorization": "Bearer role_SI"})
+        self.assertEqual(resp.status_code, 404)
+
+        # Real dossier for CASE-001.
+        resp = self.client.post(
+            "/server/export_fn/dossier_pdf", json={"case_id": "CASE-001"},
+            headers={"authorization": "Bearer role_SI"})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.headers["X-Pramaan-Export-Mode"],
+                         "fallback_html_no_smartbrowz")
+        body = resp.text
+        self.assertIn("Court-Ready Case Dossier", body)
+        self.assertIn("CASE-001", body)
+        # Section 2: resolved suspect via canonical identity.
+        self.assertIn("CANON-0042", body)
+        self.assertIn("Mohammad Rafi", body)
+        # Section 3: case-twin evidence actually computed (top match present).
+        self.assertIn("Case-twin similarity evidence", body)
+        self.assertIn("CASE-002", body)
+        # Sections 4-6 present.
+        self.assertIn("Associate clusters", body)
+        self.assertIn("Spatial hotspots", body)
+        self.assertIn("HOTSPOT-1", body)
+        self.assertIn("Access audit trail", body)
+        # The denied Analyst attempt above is part of the printed trail.
+        self.assertIn("deny", body)
+
+
+class RateLimitAndRoleTests(unittest.TestCase):
+    """
+    Task 4 loose ends:
+      (a) the rate limiter is now attached to the REAL router endpoints
+          (not the dead @app.post duplicates that FastAPI shadowed), so it
+          actually fires; and
+      (b) CatalystRepository resolves the Policy role to the exact string
+          the gateway enum expects ("Policy", never "Policy Maker"), so RBAC
+          for that role does not silently break.
+    """
+
+    def _reset_limiter(self):
+        try:
+            from rate_limit import limiter
+            limiter._storage.reset()
+        except Exception:
+            pass
+
+    def setUp(self):
+        import repositories as repo_module
+        self.fake_repo = FakeRepo(
+            persons=list(repo_module.MOCK_PERSONS),
+            cases=list(repo_module.MOCK_CASES),
+            links=list(repo_module.MOCK_LINKS),
+            warrants=list(repo_module.MOCK_WARRANTS),
+        )
+        self._orig_repo = app_module.repo
+        app_module.repo = self.fake_repo
+        self.client = TestClient(app)
+        self._reset_limiter()   # start from a clean window
+
+    def tearDown(self):
+        app_module.repo = self._orig_repo
+        self._reset_limiter()   # don't leak consumed budget into other tests
+
+    _RESOLVE_BODY = {
+        "record_a": {"source_id": "a", "source_table": "fir", "name": "Ramesh Kumar", "age": 30},
+        "record_b": {"source_id": "b", "source_table": "fir", "name": "Suresh Reddy", "age": 41},
+    }
+
+    # ------------------------------------------------------------------ (a)
+
+    def test_rate_limit_actually_fires_on_burst(self):
+        """
+        Exceeding 30/minute on the real /resolve handler returns 429 -- proof
+        the limit is live on the router endpoint, not the shadowed @app.post
+        duplicate that never fired. The 31st/32nd calls in the same window are
+        rejected; health (unlimited) keeps answering.
+        """
+        codes = []
+        for _ in range(32):
+            r = self.client.post(
+                "/server/entity_resolution_fn/resolve",
+                json=self._RESOLVE_BODY,
+                headers={"authorization": "Bearer role_SI"})
+            codes.append(r.status_code)
+        self.assertEqual(codes[:30], [200] * 30,
+                         f"first 30 should pass, got {codes[:30]}")
+        self.assertIn(429, codes, f"limit never fired; codes={codes}")
+
+        # An unlimited endpoint is unaffected even after the burst.
+        health = self.client.get("/server/entity_resolution_fn/health")
+        self.assertEqual(health.status_code, 200)
+
+    # ------------------------------------------------------------------ (b)
+
+    def test_policy_role_string_matches_gateway_enum(self):
+        """
+        The real CatalystRepository (fallback mode here) must map a Policy
+        auth header to "Policy" -- the exact gateway enum value -- not
+        "Policy Maker", which would raise ValueError and break RBAC.
+        """
+        from repositories import CatalystRepository
+        from routers import gateway_fn
+        repo = CatalystRepository()  # no live Catalyst -> fallback mode
+
+        role = repo.get_user_role({"authorization": "Bearer role_Policy"})
+        self.assertEqual(role, "Policy")
+        # The string must be a valid Role enum member (no ValueError).
+        self.assertEqual(gateway_fn.Role(role), gateway_fn.Role.POLICY)
+        # And the header-less fallback default is a real role, not a bad string.
+        self.assertEqual(gateway_fn.Role(repo.get_user_role({})),
+                         gateway_fn.Role.ANALYST)
+
+    def test_policy_role_recognized_and_authorized_for_its_permission(self):
+        """
+        End to end via gateway_fn/check_access: a Policy user IS allowed the
+        permission the role actually holds (district_rollup) -- a 200 with
+        allowed=True. Under a "Policy Maker" mismatch this same call would
+        instead 403 with "Invalid role", so this is a direct regression guard.
+        """
+        resp = self.client.post(
+            "/server/gateway_fn/check_access",
+            json={"resource": "district_rollup"},
+            headers={"authorization": "Bearer role_Policy"})
+        self.assertEqual(resp.status_code, 200, resp.text)
+        body = resp.json()
+        self.assertTrue(body["allowed"])
+        self.assertEqual(body["role"], "Policy")
 
 
 if __name__ == "__main__":

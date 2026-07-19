@@ -4,19 +4,16 @@ from fastapi import FastAPI, Request, Response, HTTPException, status
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
+from rate_limit import limiter  # single shared limiter (see rate_limit.py)
 from repositories import CatalystRepository
 from routers import gateway_fn, entity_resolution_fn, case_twin_fn, intent_router_fn, graph_fn, export_fn
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("appsail.app")
-
-# Initialize SlowAPI rate limiter
-limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(title="Pramaan Unified AppSail Server")
 app.state.limiter = limiter
@@ -92,18 +89,11 @@ app.include_router(intent_router_fn.router)
 app.include_router(graph_fn.router)
 app.include_router(export_fn.router)  # SmartBrowz PDF export (own_case_detail)
 
-# 6. Apply Rate Limiting to critical routers/endpoints
-# Rate limit entity resolution to 30 requests per minute
-@app.post("/server/entity_resolution_fn/resolve")
-@limiter.limit("30/minute")
-def rate_limited_resolve(req: entity_resolution_fn.ResolveRequest, request: Request):
-    return entity_resolution_fn.resolve(req, request)
-
-# Rate limit intent router classification to 20 requests per minute
-@app.post("/server/intent_router_fn/route")
-@limiter.limit("20/minute")
-def rate_limited_route(req: intent_router_fn.RouteRequest, request: Request):
-    return intent_router_fn.route(req, request)
+# 6. Rate limiting is applied directly on the router endpoints themselves
+#    (entity_resolution_fn.resolve @ 30/min, intent_router_fn.route @ 20/min)
+#    via the shared limiter in rate_limit.py. The previous @app.post
+#    re-registrations here were dead code -- shadowed by the routers included
+#    above -- so the limits never fired; they have been removed.
 
 # 7. Serve Web Client Frontend dynamically
 static_dir = os.path.join(os.path.dirname(__file__), "static")

@@ -124,3 +124,19 @@ CREATE TABLE AccessAuditLog (
     timestamp              TIMESTAMP NOT NULL
 );
 
+-- Active-warrant status, keyed on the resolved identity. This is the real,
+-- auditable data source behind the priority score's warrant factor -- it
+-- replaces a former hardcoded ID check, so that every one of the four
+-- priority inputs (recency, severity, centrality, warrant) traces to data,
+-- not to a literal in the source. graph_fn's /priority reads it via
+-- repositories.fetch_warrants(); active_flag is what the score keys on.
+CREATE TABLE Warrant (
+    warrant_number      VARCHAR(40) PRIMARY KEY,
+    canonical_id        VARCHAR(40) NOT NULL,   -- references EntityResolution.canonical_id
+    active_flag         BOOLEAN NOT NULL DEFAULT FALSE,
+    issuing_court       VARCHAR(200),
+    offence             VARCHAR(200),
+    issued_at           TIMESTAMP,
+    updated_at          TIMESTAMP
+);
+
