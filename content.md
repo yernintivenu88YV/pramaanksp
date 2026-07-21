@@ -179,6 +179,69 @@ The Pramaan backend is built as a unified, high-performance containerized **Fast
 
 ---
 
+## 6. Outstanding Work & Roadmap to Production (What's Left To Do)
+
+The backend is **live on Development** and the core engines are verified against
+the live URL (health, entity resolution `auto_merge`, case-twin ranking
+CASE‑002 = 0.851 vs non‑match 0.163). The items below are what remains to reach
+a fully wired demo and, after that, Production.
+
+### 6.1 Console setup (must be done in the Catalyst console — cannot be scripted from the CLI)
+- [ ] **Create the Data Store tables** from `schema/data_store_schema.sql` — all
+      of `Person, EntityResolution, Location, Case, CasePersonLink, Vehicle,
+      FinancialTransaction, OffenderProfile, ConversationLog, AccessAuditLog,
+      Warrant`. Until they exist the app runs in fallback/mock mode and
+      data-backed calls (dossier, conversation export) return 404.
+- [ ] **Seed demo rows** — import `schema/seed_data.sql` (CASE‑001…005, Kannada
+      CASE‑K01/K02, CANON‑0042/0044, one active + one inactive warrant).
+- [ ] **Set environment variables** on the AppSail app:
+      `GEMINI_API_KEY` (intent router `/route`), `NEO4J_URI/USER/PASSWORD` (live
+      graph vs mock), `BHASHINI_USER_ID/ULCA_API_KEY/PIPELINE_ID` (live voice).
+- [ ] **Enable SmartBrowz** for the project so `/dossier_pdf` and
+      `/conversation_pdf` return a real PDF (`X-Pramaan-Export-Mode:
+      smartbrowz_pdf`) instead of the honest HTML fallback.
+
+### 6.2 Verification still owed (code-complete, not yet exercised against live services)
+- [ ] **Real SmartBrowz PDF** — both export endpoints, confirming the
+      `smartbrowz_pdf` mode header (blocked on 6.1 tables + SmartBrowz).
+- [ ] **Bhashini voice** ASR→route→TTS round trip (needs the key; currently mock).
+- [ ] **Neo4j live** traverse/Leiden (currently mock without credentials).
+- [ ] **LLM intent router** on the deployed backend (needs `GEMINI_API_KEY`).
+- [ ] **Backfill embeddings** — run `python appsail/backfill_embeddings.py --all`
+      after tables+data exist, to populate `Case.narrative_embedding`.
+
+### 6.3 Known engineering follow-ups
+- [ ] **Rate limiting across instances** — the SlowAPI limiter is proven in unit
+      tests, but its in-memory store is per-instance; on a multi-instance AppSail
+      it won't enforce a global 30/min. Move the store to **Catalyst Cache /
+      Redis** for distributed enforcement.
+- [ ] **Embeddings in the container** — the deployed backend intentionally ships
+      **without `torch`/`sentence-transformers`** (too heavy). Narrative
+      similarity therefore uses **precomputed vectors (numpy) or TF-IDF** at
+      runtime; embeddings are computed offline via `backfill_embeddings.py`.
+- [ ] **Native Kannada terminology validation** — the police phrase set in
+      `functions/case_twin_fn/EMBEDDINGS_EVAL.md` needs a Kannada-speaking officer
+      to confirm preferred FIR wording. Flagged as un-fakeable.
+
+### 6.4 Production promotion (deliberate final step — not started)
+- [ ] Re-run the full test suite (`appsail/test_appsail.py`, 17/17) green.
+- [ ] Promote Development → Production via `catalyst-pipelines.yaml` (manual gate).
+- [ ] Re-run the demo sequence against the **Production** URL specifically.
+- [ ] Tag the working state as the rollback point; write the scripted live demo.
+
+### 6.5 Deployment lessons captured (so the 503 saga isn't repeated)
+- The AppSail container's interpreter is **`python3.12`** (not `python`/`python3`);
+  `app-config.json` `command` must match, or startup fails with ENOENT.
+- **Catalyst AppSail does not auto-install `requirements.txt`.** Dependencies are
+  **vendored** into `appsail/` as complete **Linux** wheels
+  (`pip download --only-binary=:all: --platform manylinux_2_17_x86_64 --platform
+  manylinux_2_28_x86_64 --python-version 312 --abi cp312`, then extracted).
+- The startup entry `run_app.py` binds `0.0.0.0` on `$X_ZOHO_CATALYST_LISTEN_PORT`
+  and has a **stdlib-only diagnostic fallback** that returns the import traceback
+  over HTTP — the tool that finally surfaced the real boot error.
+
+---
+
 ## 7. UI/UX Audit & Quality Assessment Summary
 
 An evaluation by a Senior UI/UX Auditor scored the Pramaan interface across seven design dimensions:
