@@ -1,8 +1,10 @@
 import os
 import sys
+import json
 import logging
+import traceback
 
-# Ensure current script directory is in sys.path and is current working directory
+# Ensure this directory is importable and is the CWD.
 current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
@@ -11,56 +13,70 @@ os.chdir(current_dir)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("appsail.run")
 
+
+def _listen_port() -> int:
+    val = (
+        os.environ.get("X_ZOHO_CATALYST_LISTEN_PORT")
+        or os.environ.get("PORT")
+        or os.environ.get("LISTEN_PORT")
+        or "8000"
+    )
+    try:
+        return int(val)
+    except (ValueError, TypeError):
+        return 8000
+
+
+port = _listen_port()
+
 try:
+    # Primary path: the real FastAPI app under uvicorn.
     from app import app
     import uvicorn
 
-    port_val = (
-        os.environ.get("X_ZOHO_CATALYST_LISTEN_PORT")
-        or os.environ.get("PORT")
-        or os.environ.get("LISTEN_PORT")
-        or "8000"
-    )
-    try:
-        port = int(port_val)
-    except (ValueError, TypeError):
-        port = 8000
-
-    logger.info(f"Starting Pramaan AppSail main server on port {port} (CWD: {os.getcwd()})")
-    print(f"Starting Pramaan AppSail main server on port {port}", flush=True)
+    msg = f"Starting Pramaan AppSail main server on 0.0.0.0:{port} (CWD: {os.getcwd()})"
+    logger.info(msg)
+    print(msg, flush=True)
     uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
 
-except Exception as e:
-    import traceback
+except BaseException as e:  # BaseException so even SystemExit/import-time exits surface
     tb = traceback.format_exc()
-    logger.error(f"Main app startup failed: {e}\n{tb}")
-    print(f"Main app startup failed: {e}\n{tb}", flush=True)
+    print(f"Main app startup FAILED: {e}\n{tb}", flush=True)
 
-    # Start a minimal fallback server on the assigned port to report diagnosis
-    from fastapi import FastAPI
-    import uvicorn
+    # Dependency-free diagnostic fallback. Uses ONLY the Python standard
+    # library, so it still binds and reports the real error even if fastapi /
+    # uvicorn / any pip dependency failed to install in the container. This is
+    # the difference between an opaque platform 503 and a readable traceback:
+    #   - If this server answers -> run_app.py IS executing; the JSON body is
+    #     the actual startup error to fix.
+    #   - If the platform still 503s -> run_app.py is NOT being executed at all
+    #     (the effective Startup Command isn't `python run_app.py`).
+    from http.server import BaseHTTPRequestHandler, HTTPServer
 
-    fallback_app = FastAPI(title="Pramaan Fallback Diagnostic Server")
+    body = json.dumps({
+        "status": "fallback_error",
+        "error": str(e),
+        "traceback": tb,
+        "python": sys.version,
+        "cwd": os.getcwd(),
+    }).encode("utf-8")
 
-    @fallback_app.get("/")
-    def index():
-        return {"status": "fallback_error", "error": str(e), "traceback": tb}
+    class DiagnosticHandler(BaseHTTPRequestHandler):
+        def _respond(self):
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
 
-    @fallback_app.get("/server/gateway_fn/health")
-    def health():
-        return {"status": "fallback_error", "error": str(e), "traceback": tb}
+        def do_GET(self):
+            self._respond()
 
-    port_val = (
-        os.environ.get("X_ZOHO_CATALYST_LISTEN_PORT")
-        or os.environ.get("PORT")
-        or os.environ.get("LISTEN_PORT")
-        or "8000"
-    )
-    try:
-        port = int(port_val)
-    except (ValueError, TypeError):
-        port = 8000
+        def do_POST(self):
+            self._respond()
 
-    print(f"Starting fallback diagnostic server on port {port}", flush=True)
-    uvicorn.run(fallback_app, host="0.0.0.0", port=port, log_level="info")
+        def log_message(self, *args):
+            pass
 
+    print(f"Starting stdlib fallback diagnostic server on 0.0.0.0:{port}", flush=True)
+    HTTPServer(("0.0.0.0", port), DiagnosticHandler).serve_forever()
