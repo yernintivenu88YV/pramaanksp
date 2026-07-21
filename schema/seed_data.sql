@@ -17,7 +17,7 @@ INSERT INTO EntityResolution (canonical_id, source_record_id, source_table, matc
  ('CANON-0044','P-003','fir',0.90,'probabilistic',NULL,NULL,'2026-01-07 11:00:00');
 
 -- ---- Cases (narrative_embedding left NULL; backfill_embeddings.py fills it) ----
-INSERT INTO Case (case_id, fir_number, station_id, crime_type, modus_operandi, date_time, status, narrative_text, location_id) VALUES
+INSERT INTO Cases (case_id, fir_number, station_id, crime_type, modus_operandi, date_time, status, narrative_text, location_id) VALUES
  ('CASE-001','FIR-2026-0001','STATION-BGLR-CENTRAL','Burglary','Rear window forced entry using crowbar, night time','2026-07-11 02:00:00','open','Complainant reported burglary at residence. Entry made through rear window using a crowbar. Occurred between 1 AM and 3 AM. Jewelry and cash stolen.','LOC-001'),
  ('CASE-002','FIR-2026-0002','STATION-BGLR-CENTRAL','Burglary','Rear window entry with crowbar, late night','2026-07-04 01:30:00','open','Victim reported house burglary. Entry via rear window using a crowbar, between midnight and 2 AM. Cash and gold ornaments stolen.','LOC-002'),
  ('CASE-003','FIR-2026-0003','STATION-BGLR-SOUTH','Burglary','Front door lock picked during daytime while owners away','2026-07-07 14:00:00','open','Complainant returned home to find front door lock picked and valuables missing during daytime hours.','LOC-003'),

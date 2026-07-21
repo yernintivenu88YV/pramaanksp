@@ -257,10 +257,13 @@ class CatalystRepository:
             return MOCK_CASES
         try:
             zcql = self.app.zcql()
-            rows = zcql.execute_query("SELECT case_id, crime_type, modus_operandi, narrative_text, narrative_embedding, latitude, longitude, date_time FROM Case")
+            try:
+                rows = zcql.execute_query("SELECT case_id, crime_type, modus_operandi, narrative_text, narrative_embedding, latitude, longitude, date_time FROM Cases")
+            except Exception:
+                rows = zcql.execute_query("SELECT case_id, crime_type, modus_operandi, narrative_text, narrative_embedding, latitude, longitude, date_time FROM Case")
             res = []
             for r in rows:
-                c = r.get("Case")
+                c = r.get("Cases") or r.get("Case")
                 if c:
                     res.append({
                         "case_id": c.get("case_id"),
@@ -290,12 +293,17 @@ class CatalystRepository:
             return
         try:
             zcql = self.app.zcql()
-            rows = zcql.execute_query(f"SELECT ROWID FROM Case WHERE case_id = '{case_id}'")
+            table_name = "Cases"
+            try:
+                rows = zcql.execute_query(f"SELECT ROWID FROM Cases WHERE case_id = '{case_id}'")
+            except Exception:
+                table_name = "Case"
+                rows = zcql.execute_query(f"SELECT ROWID FROM Case WHERE case_id = '{case_id}'")
             if not rows:
-                logger.warning(f"store_case_embedding: no Case row for {case_id}")
+                logger.warning(f"store_case_embedding: no {table_name} row for {case_id}")
                 return
-            row_id = rows[0]["Case"]["ROWID"]
-            table = self.app.datastore().table("Case")
+            row_id = (rows[0].get(table_name) or rows[0].get("Case", {})).get("ROWID")
+            table = self.app.datastore().table(table_name)
             table.update_row({
                 "ROWID": row_id,
                 "narrative_embedding": json.dumps(vector),
