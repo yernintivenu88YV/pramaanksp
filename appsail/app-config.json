@@ -1,6 +1,6 @@
 {
   "stack": "python_3_12",
-  "command": "python run_app.py",
+  "command": "python3.12 run_app.py",
   "buildPath": ".",
   "memory": 2048,
   "env": {

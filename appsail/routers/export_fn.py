@@ -213,8 +213,14 @@ def _render(repo, html: str, filename: str) -> Response:
     Live Catalyst -> SmartBrowz HTML-to-PDF (application/pdf). Otherwise the
     composed HTML is returned unchanged with an explicit fallback header --
     never a fake or empty "PDF".
+
+    SmartBrowz depends on having a live Catalyst app (admin credentials),
+    NOT on whether the Data Store has tables -- so gate on repo.app, not on
+    repo.is_fallback(). This lets the real PDF path work even when the DB is
+    in seed/fallback mode. Locally (no Catalyst) repo.app is None, so tests
+    still get the honest HTML fallback.
     """
-    if not repo.is_fallback() and getattr(repo, "app", None) is not None:
+    if getattr(repo, "app", None) is not None:
         try:
             raw = repo.app.smart_browz().convert_to_pdf(html)
             pdf_bytes = raw.content if hasattr(raw, "content") else bytes(raw)

@@ -53,12 +53,37 @@ except BaseException as e:  # BaseException so even SystemExit/import-time exits
     #     (the effective Startup Command isn't `python run_app.py`).
     from http.server import BaseHTTPRequestHandler, HTTPServer
 
+    # Environment diagnostics: figure out WHY an import failed (deps not
+    # installed? wrong path? partial package?). Best-effort, never raises.
+    diag = {}
+    try:
+        diag["sys_path"] = sys.path
+        diag["cwd_listing"] = sorted(os.listdir(os.getcwd()))[:60]
+        diag["requirements_at_cwd"] = os.path.exists(os.path.join(os.getcwd(), "requirements.txt"))
+        # Where does 'fastapi' resolve, if at all?
+        import importlib.util as _u
+        spec = _u.find_spec("fastapi")
+        diag["fastapi_spec_origin"] = getattr(spec, "origin", None) if spec else None
+        diag["fastapi_spec_locations"] = list(getattr(spec, "submodule_search_locations", []) or []) if spec else None
+        # Find any site-packages on the path and whether fastapi is inside.
+        sp_info = {}
+        for p in sys.path:
+            try:
+                if p and os.path.isdir(p) and ("site-packages" in p or "dist-packages" in p):
+                    sp_info[p] = "fastapi" in os.listdir(p)
+            except Exception:
+                pass
+        diag["site_packages"] = sp_info
+    except Exception as diag_err:
+        diag["diag_error"] = str(diag_err)
+
     body = json.dumps({
         "status": "fallback_error",
         "error": str(e),
         "traceback": tb,
         "python": sys.version,
         "cwd": os.getcwd(),
+        "diag": diag,
     }).encode("utf-8")
 
     class DiagnosticHandler(BaseHTTPRequestHandler):
