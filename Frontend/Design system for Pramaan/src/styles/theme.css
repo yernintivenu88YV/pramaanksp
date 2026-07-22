@@ -1,0 +1,326 @@
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Dense enterprise base — smaller root size, tighter geometry */
+  --font-size: 13px;
+
+  /* Pramaan palette — near-black intelligence terminal, neutral-first */
+  --pramaan-bg: #0B0D10;
+  --pramaan-surface: #14171C;
+  --pramaan-elevated: #1B1F26;
+  --pramaan-panel: #1B1F26;
+  --pramaan-hover: #1B1F26;
+  /* Borders are the primary separator — subtle white overlay, never paired
+     with a drop shadow on the same element (see ui/elevation). */
+  --pramaan-border: rgba(255, 255, 255, 0.08);
+  --pramaan-border-strong: rgba(255, 255, 255, 0.12);
+  /* Single accent (AI / active) + restrained signal colors */
+  --pramaan-primary: #4A9EFF;
+  --pramaan-secondary: #7DB8FF;
+  --pramaan-signal: #FFB84D;
+  --pramaan-success: #5FA37E;
+  --pramaan-warning: #FFB84D;
+  --pramaan-critical: #E5675C;
+  --pramaan-text: #E8EAED;
+  --pramaan-text-secondary: #9AA0A6;
+
+  --background: #0B0D10;
+  --foreground: #E8EAED;
+  --card: #14171C;
+  --card-foreground: #E8EAED;
+  --popover: #1B1F26;
+  --popover-foreground: #E8EAED;
+  --primary: #4A9EFF;
+  --primary-foreground: #0B0D10;
+  --secondary: #1B1F26;
+  --secondary-foreground: #E8EAED;
+  --muted: #14171C;
+  --muted-foreground: #9AA0A6;
+  --accent: #1B1F26;
+  --accent-foreground: #E8EAED;
+  --destructive: #E5675C;
+  --destructive-foreground: #0B0D10;
+  --border: #23272E;
+  --input: #23272E;
+  --input-background: #14171C;
+  --switch-background: #23272E;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: #4A9EFF;
+  --chart-1: #4A9EFF;
+  --chart-2: #7DB8FF;
+  --chart-3: #5FA37E;
+  --chart-4: #FFB84D;
+  --chart-5: #9AA0A6;
+  /* 8px cards, 4px controls */
+  --radius: 0.5rem;
+  --sidebar: #0B0D10;
+  --sidebar-foreground: #9AA0A6;
+  --sidebar-primary: #4A9EFF;
+  --sidebar-primary-foreground: #0B0D10;
+  --sidebar-accent: #1B1F26;
+  --sidebar-accent-foreground: #E8EAED;
+  --sidebar-border: #23272E;
+  --sidebar-ring: #4A9EFF;
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.145 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  --ring: oklch(0.439 0 0);
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-ring: oklch(0.439 0 0);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-pramaan-bg: var(--pramaan-bg);
+  --color-pramaan-surface: var(--pramaan-surface);
+  --color-pramaan-elevated: var(--pramaan-elevated);
+  --color-pramaan-panel: var(--pramaan-panel);
+  --color-pramaan-hover: var(--pramaan-hover);
+  --color-pramaan-border: var(--pramaan-border);
+  --color-pramaan-border-strong: var(--pramaan-border-strong);
+  --color-pramaan-signal: var(--pramaan-signal);
+  --color-pramaan-primary: var(--pramaan-primary);
+  --color-pramaan-secondary: var(--pramaan-secondary);
+  --color-pramaan-success: var(--pramaan-success);
+  --color-pramaan-warning: var(--pramaan-warning);
+  --color-pramaan-critical: var(--pramaan-critical);
+  --color-pramaan-text: var(--pramaan-text);
+  --color-pramaan-text-secondary: var(--pramaan-text-secondary);
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Command-center chrome: thin, unobtrusive scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--pramaan-border) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: var(--pramaan-border);
+    border-radius: 4px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: var(--pramaan-border-strong);
+  }
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Numeric data aligns in columns across the OS */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    background: rgba(63, 125, 247, 0.28);
+  }
+
+  /**
+  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
+  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
+  */
+
+  html {
+    font-size: var(--font-size);
+  }
+
+  h1 {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  h2 {
+    font-size: var(--text-xl);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  h3 {
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  h4 {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  label {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  button {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  input {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-normal);
+    line-height: 1.5;
+  }
+}
+
+/* ── Motion system ──────────────────────────────────────────────
+   Only two patterns are permitted app-wide:
+   1. Panel/drawer open-close: 200ms ease-out, slide + fade
+   2. Content update: 150ms fade-in, no slide
+   Plus two utility loops: skeleton shimmer and the AI "thinking" pulse.
+   Nothing exceeds 550ms. */
+@layer utilities {
+  @keyframes pramaan-panel-in {
+    from { opacity: 0; transform: translateX(8px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes pramaan-panel-in-left {
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes pramaan-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes pramaan-shimmer {
+    0%   { opacity: 0.45; }
+    50%  { opacity: 0.85; }
+    100% { opacity: 0.45; }
+  }
+  @keyframes pramaan-dot-pulse {
+    0%, 100% { opacity: 0.25; }
+    50%      { opacity: 1; }
+  }
+  @keyframes pramaan-dash {
+    to { stroke-dashoffset: -24; }
+  }
+
+  .anim-panel      { animation: pramaan-panel-in 200ms ease-out; }
+  .anim-panel-left { animation: pramaan-panel-in-left 200ms ease-out; }
+  .anim-content    { animation: pramaan-fade-in 150ms ease-out; }
+  .skeleton {
+    background: var(--pramaan-elevated);
+    animation: pramaan-shimmer 1.5s ease-in-out infinite;
+  }
+  .thinking-dot { animation: pramaan-dot-pulse 1.5s ease-in-out infinite; }
+  .thinking-dot:nth-child(2) { animation-delay: 0.25s; }
+  .thinking-dot:nth-child(3) { animation-delay: 0.5s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .anim-panel, .anim-panel-left, .anim-content,
+    .skeleton, .thinking-dot { animation: none; }
+  }
+}
+
+/* ── Leaflet dark-treatment overrides ───────────────────────────── */
+.leaflet-container {
+  background: #0B0D10;
+  font-family: var(--font-mono);
+}
+.leaflet-control-attribution {
+  background: rgba(11,13,16,0.7) !important;
+  color: #9AA0A6 !important;
+  font-size: 8px !important;
+}
+.leaflet-control-attribution a { color: #9AA0A6 !important; }
+.leaflet-bar, .leaflet-bar a {
+  background: #14171C !important;
+  color: #9AA0A6 !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+.leaflet-bar a:hover { background: #1B1F26 !important; color: #E8EAED !important; }
+/* Animated dashed movement trail */
+.trail-dash {
+  stroke-dasharray: 6 6;
+  animation: pramaan-dash 1s linear infinite;
+}
+.pramaan-marker { background: transparent; border: none; }
