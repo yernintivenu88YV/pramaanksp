@@ -1,4 +1,7 @@
 {
+  "client": {
+    "source": "client"
+  },
   "appsail": [
     {
       "name": "pramaan",

@@ -1,5 +1,7 @@
 {
-    "name": "client_app",
-    "version": "0.0.1",
-    "homepage": "index.html"
+  "name": "pramaan_client",
+  "version": "1.0.0",
+  "homepage": "index.html",
+  "login_redirect": "index.html",
+  "404": "index.html"
 }

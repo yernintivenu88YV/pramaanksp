@@ -4,8 +4,8 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "build": "vite build",
-    "dev": "vite"
+    "build": "cd client_src && npm install && npm run build",
+    "dev": "cd client_src && npm run dev"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
