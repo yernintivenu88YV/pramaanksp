@@ -1,67 +1,51 @@
-// Mock intelligence data for the Pramaan platform.
+﻿// Demo intelligence data aligned to the AppSail seed records.
 
 export const cases = [
-  { id: 'PRM-4821', title: 'Cross-border wire structuring ring', status: 'escalated', priority: 'critical', lead: 'A. Okonkwo', entities: 47, updated: '12m ago', progress: 68, region: 'Sector 4 / North' },
-  { id: 'PRM-4809', title: 'Encrypted device network — Op. Vellum', status: 'active', priority: 'critical', lead: 'R. Devi', entities: 33, updated: '38m ago', progress: 41, region: 'Metro Central' },
-  { id: 'PRM-4790', title: 'Shell company layering scheme', status: 'active', priority: 'warning', lead: 'M. Haddad', entities: 21, updated: '1h ago', progress: 55, region: 'Sector 2 / East' },
-  { id: 'PRM-4772', title: 'Counterfeit credential distribution', status: 'review', priority: 'warning', lead: 'S. Lindqvist', entities: 18, updated: '3h ago', progress: 82, region: 'Port District' },
-  { id: 'PRM-4758', title: 'Illicit marketplace vendor cluster', status: 'active', priority: 'info', lead: 'J. Park', entities: 29, updated: '5h ago', progress: 34, region: 'Sector 7 / West' },
-  { id: 'PRM-4731', title: 'Vehicle theft fencing operation', status: 'review', priority: 'info', lead: 'T. Alvarez', entities: 14, updated: '9h ago', progress: 90, region: 'Industrial Belt' },
-  { id: 'PRM-4702', title: 'Phishing infrastructure takedown', status: 'closed', priority: 'success', lead: 'N. Rahman', entities: 52, updated: '2d ago', progress: 100, region: 'Metro Central' },
+  { id: 'CASE-001', fir: 'FIR-2026-0001', title: 'Rear window burglary using crowbar', status: 'active', priority: 'critical', lead: 'SI Kavya Rao', entities: 6, updated: '12m ago', progress: 68, region: 'Bengaluru Central', station: 'STATION-BGLR-CENTRAL' },
+  { id: 'CASE-002', fir: 'FIR-2026-0002', title: 'Late night house burglary with similar MO', status: 'active', priority: 'warning', lead: 'PSI Arjun Hegde', entities: 4, updated: '38m ago', progress: 54, region: 'Bengaluru Central', station: 'STATION-BGLR-CENTRAL' },
+  { id: 'CASE-003', fir: 'FIR-2026-0003', title: 'Front door lock picked during daytime', status: 'review', priority: 'info', lead: 'SI Meera Patil', entities: 3, updated: '1h ago', progress: 41, region: 'Bengaluru South', station: 'STATION-BGLR-SOUTH' },
+  { id: 'CASE-004', fir: 'FIR-2026-0004', title: 'Motorbike chain snatching near market road', status: 'active', priority: 'warning', lead: 'PSI Nikhil Gowda', entities: 5, updated: '3h ago', progress: 57, region: 'Mysuru Central', station: 'STATION-MYS-CENTRAL' },
+  { id: 'CASE-005', fir: 'FIR-2026-0005', title: 'Motorcycle theft outside shopping complex', status: 'escalated', priority: 'critical', lead: 'ACP Ramesh Bhat', entities: 7, updated: '5h ago', progress: 73, region: 'Bengaluru North', station: 'STATION-BGLR-NORTH' },
+  { id: 'CASE-K01', fir: 'FIR-2026-0011', title: 'Kannada narrative burglary report', status: 'review', priority: 'info', lead: 'SI Kavya Rao', entities: 2, updated: '8h ago', progress: 35, region: 'Bengaluru Central', station: 'STATION-BGLR-CENTRAL' },
 ];
 
 export const alerts = [
-  { id: 'AL-9921', title: 'New high-value transaction detected', detail: '€412,000 transfer between two flagged accounts in PRM-4821.', severity: 'critical', source: 'Financial Feed', time: '2m ago', caseId: 'PRM-4821' },
-  { id: 'AL-9918', title: 'Device re-appeared on network', detail: 'IMEI matching watchlist reconnected near Metro Central tower cluster.', severity: 'critical', source: 'Signals', time: '9m ago', caseId: 'PRM-4809' },
-  { id: 'AL-9914', title: 'Entity linked to secondary case', detail: "Person node 'V. Marchetti' now appears in both PRM-4790 and PRM-4758.", severity: 'warning', source: 'Link Engine', time: '24m ago', caseId: 'PRM-4790' },
-  { id: 'AL-9902', title: 'Document ingestion complete', detail: '1,204 pages processed and indexed for PRM-4772.', severity: 'info', source: 'Ingest', time: '1h ago', caseId: 'PRM-4772' },
-  { id: 'AL-9887', title: 'Warrant approval received', detail: 'Judicial approval logged for search action in PRM-4758.', severity: 'success', source: 'Case Ops', time: '2h ago', caseId: 'PRM-4758' },
-  { id: 'AL-9871', title: 'Anomalous login pattern', detail: 'Account cluster shows coordinated access from 6 jurisdictions.', severity: 'warning', source: 'Behavior', time: '4h ago' },
-];
-
-export const graphNodes = [
-  { id: 'n1', label: 'V. Marchetti', type: 'person', x: 300, y: 220, risk: 'critical' },
-  { id: 'n2', label: 'Aurora Holdings', type: 'org', x: 500, y: 140, risk: 'warning' },
-  { id: 'n3', label: 'Port District', type: 'location', x: 520, y: 320, risk: 'info' },
-  { id: 'n4', label: 'Acct •••4821', type: 'account', x: 140, y: 150, risk: 'critical' },
-  { id: 'n5', label: 'IMEI 35•••90', type: 'device', x: 160, y: 320, risk: 'warning' },
-  { id: 'n6', label: 'L. Fenwick', type: 'person', x: 680, y: 220, risk: 'info' },
-  { id: 'n7', label: 'Vellum LLC', type: 'org', x: 400, y: 400, risk: 'warning' },
-];
-
-export const graphEdges = [
-  { from: 'n1', to: 'n2', label: 'director' },
-  { from: 'n1', to: 'n4', label: 'owns' },
-  { from: 'n1', to: 'n5', label: 'uses' },
-  { from: 'n2', to: 'n3', label: 'registered' },
-  { from: 'n2', to: 'n6', label: 'co-signer' },
-  { from: 'n1', to: 'n7', label: 'controls' },
-  { from: 'n7', to: 'n3', label: 'operates' },
-  { from: 'n6', to: 'n7', label: 'advisor' },
-];
-
-export const timeline = [
-  { id: 't1', date: '19 Jul', time: '14:02', title: 'High-value transfer executed', detail: '€412,000 routed through Aurora Holdings account.', severity: 'critical', actor: 'V. Marchetti' },
-  { id: 't2', date: '19 Jul', time: '11:47', title: 'Device reconnected to network', detail: 'Watchlisted IMEI active near Port District.', severity: 'warning', actor: 'Signals Feed' },
-  { id: 't3', date: '18 Jul', time: '22:15', title: 'Meeting logged', detail: 'Two flagged entities co-located for 40 minutes.', severity: 'info', actor: 'Surveillance' },
-  { id: 't4', date: '18 Jul', time: '09:30', title: 'Shell entity incorporated', detail: 'Vellum LLC registered with nominee director.', severity: 'warning', actor: 'Registry Feed' },
-  { id: 't5', date: '17 Jul', time: '16:50', title: 'Warrant approved', detail: 'Judicial approval for account freeze granted.', severity: 'success', actor: 'Case Ops' },
+  { id: 'AL-1042', title: 'Shared suspect appears in burglary and vehicle theft', detail: 'CANON-0042 is linked to CASE-001 and CASE-005. Active warrant present.', severity: 'critical', source: 'Link Engine', time: '2m ago', caseId: 'CASE-001' },
+  { id: 'AL-1038', title: 'Similar burglary signature detected', detail: 'CASE-002 matches CASE-001 on rear-window entry, crowbar use, night timing, and nearby location.', severity: 'warning', source: 'Case Twin', time: '9m ago', caseId: 'CASE-002' },
+  { id: 'AL-1034', title: 'Identity resolution confidence high', detail: 'Mohammed Rafi and Mohammad Rafi share phone, vehicle registration, and address tokens.', severity: 'success', source: 'Entity Resolution', time: '24m ago', caseId: 'CANON-0042' },
+  { id: 'AL-1026', title: 'Hotspot cluster forming in Bengaluru Central', detail: 'Three recent property crimes fall inside the configured density radius.', severity: 'info', source: 'Hotspots', time: '1h ago', caseId: 'HOTSPOT-1' },
+  { id: 'AL-1019', title: 'Dossier export requested', detail: 'Court-ready dossier generation is available once SmartBrowz is enabled.', severity: 'info', source: 'Audit', time: '2h ago', caseId: 'CASE-001' },
 ];
 
 export const activitySeries = [
-  { day: 'Mon', alerts: 12, resolved: 8 },
-  { day: 'Tue', alerts: 19, resolved: 11 },
-  { day: 'Wed', alerts: 15, resolved: 14 },
-  { day: 'Thu', alerts: 27, resolved: 18 },
-  { day: 'Fri', alerts: 22, resolved: 20 },
-  { day: 'Sat', alerts: 9, resolved: 7 },
-  { day: 'Sun', alerts: 14, resolved: 10 },
+  { time: 'Mon', value: 12, alerts: 12, resolved: 8 },
+  { time: 'Tue', value: 19, alerts: 19, resolved: 11 },
+  { time: 'Wed', value: 15, alerts: 15, resolved: 14 },
+  { time: 'Thu', value: 27, alerts: 27, resolved: 18 },
+  { time: 'Fri', value: 22, alerts: 22, resolved: 20 },
+  { time: 'Sat', value: 9, alerts: 9, resolved: 7 },
+  { time: 'Sun', value: 14, alerts: 14, resolved: 10 },
+];
+
+export const graphNodes = [
+  { id: 'CANON-0042', label: 'Mohammed Rafi', type: 'person', x: 300, y: 220, risk: 'critical' },
+  { id: 'CASE-001', label: 'CASE-001', type: 'case', x: 130, y: 150, risk: 'critical' },
+  { id: 'CASE-002', label: 'CASE-002', type: 'case', x: 500, y: 140, risk: 'warning' },
+  { id: 'CASE-005', label: 'CASE-005', type: 'case', x: 510, y: 330, risk: 'warning' },
+  { id: 'KA-02-MB-1234', label: 'KA-02-MB-1234', type: 'vehicle', x: 150, y: 340, risk: 'info' },
+  { id: 'CANON-0044', label: 'Suresh Kumar', type: 'person', x: 680, y: 230, risk: 'warning' },
+];
+
+export const graphEdges = [
+  { from: 'CANON-0042', to: 'CASE-001', label: 'accused in' },
+  { from: 'CANON-0042', to: 'CASE-005', label: 'accused in' },
+  { from: 'CANON-0042', to: 'KA-02-MB-1234', label: 'uses vehicle' },
+  { from: 'CANON-0044', to: 'CASE-002', label: 'accused in' },
+  { from: 'CASE-001', to: 'CASE-002', label: 'similar MO' },
 ];
 
 export const caseTypeBreakdown = [
-  { type: 'Financial', count: 34 },
-  { type: 'Cyber', count: 22 },
-  { type: 'Trafficking', count: 17 },
-  { type: 'Fraud', count: 28 },
-  { type: 'Organized', count: 13 },
+  { type: 'Burglary', count: 4 },
+  { type: 'Vehicle theft', count: 1 },
+  { type: 'Chain snatching', count: 1 },
 ];

@@ -1,93 +1,24 @@
-export const sourceCase = {
-  id: 'FIR-2291',
-  title: 'Financial fraud — wire structuring',
-  station: 'Central PS',
-  date: '02 Jul 2026',
-  status: 'Under investigation',
-  summary: 'Investigation into a cross-border wire structuring ring utilizing shell entities and smurfing techniques.',
+﻿export const targetCase = {
+  case_id: 'CASE-001',
+  crime_type: 'Burglary',
+  modus_operandi: 'Rear window forced entry using crowbar, night time',
+  narrative_text: 'Complainant reported burglary at residence. Entry made through rear window using a crowbar. Occurred between 1 AM and 3 AM. Jewelry and cash stolen.',
+  latitude: 12.9352,
+  longitude: 77.6245,
+  date_time: '2026-07-11T02:00:00',
+  weapon: 'crowbar',
+  canonical_suspect_ids: ['CANON-0042'],
 };
 
-export const sourceTimeline = [
-  { id: 'st1', date: '02 Jul', event: 'FIR registered based on FIU intelligence report.' },
-  { id: 'st2', date: '12 Jul', event: 'Aurora Holdings identified as key layering node.' },
-  { id: 'st3', date: '17 Jul', event: 'Freeze warrants executed on primary accounts.' },
-  { id: 'st4', date: '19 Jul', event: 'Key suspects connected via signals intelligence.' },
+export const candidateCases = [
+  { case_id: 'CASE-002', crime_type: 'Burglary', modus_operandi: 'Rear window entry with crowbar, late night', narrative_text: 'Victim reported house burglary. Entry via rear window using a crowbar, between midnight and 2 AM. Cash and gold ornaments stolen.', latitude: 12.9784, longitude: 77.6408, date_time: '2026-07-04T01:30:00', weapon: 'crowbar', canonical_suspect_ids: ['CANON-0044'] },
+  { case_id: 'CASE-003', crime_type: 'Burglary', modus_operandi: 'Front door lock picked during daytime while owners away', narrative_text: 'Complainant returned home to find front door lock picked and valuables missing during daytime hours.', latitude: 12.96, longitude: 77.61, date_time: '2026-07-07T14:00:00', weapon: null, canonical_suspect_ids: [] },
+  { case_id: 'CASE-004', crime_type: 'Chain snatching', modus_operandi: 'Snatched gold chain from pedestrian on motorbike', narrative_text: 'Victim was walking on the street when two men on a motorbike snatched her gold chain and fled.', latitude: 12.2958, longitude: 76.6394, date_time: '2026-07-08T11:00:00', weapon: null, canonical_suspect_ids: [] },
+  { case_id: 'CASE-005', crime_type: 'Vehicle theft', modus_operandi: 'Motorcycle stolen from parking area', narrative_text: "Complainant's motorcycle was stolen from outside a shopping complex.", latitude: 13.0827, longitude: 77.5877, date_time: '2026-06-01T16:00:00', weapon: null, canonical_suspect_ids: ['CANON-0042'] },
 ];
 
-export const similarCases = [
-  {
-    id: 'FIR-1990',
-    title: 'Trade-based money laundering network',
-    station: 'Metro East PS',
-    date: '15 Sep 2025',
-    status: 'Closed - Convictions secured',
-    similarityScore: 91,
-    dimensions: {
-      entities: 94,
-      methods: 88,
-      locations: 85,
-    },
-    commonEntities: [
-      { name: 'Aurora Holdings', type: 'Organization', relation: 'Used for layering' },
-      { name: 'V. Marchetti', type: 'Person', relation: 'Advisory role' },
-    ],
-    reasoning: [
-      'High overlap in corporate vehicles used (Aurora Holdings).',
-      'Similar structuring patterns (transactions < €15k).',
-      'Geographic overlap in the Port District.',
-    ],
-    timeline: [
-      { id: 'tc1_1', date: '15 Sep 2025', event: 'Case initiated from customs red flags.' },
-      { id: 'tc1_2', date: '22 Oct 2025', event: 'Aurora accounts frozen.' },
-      { id: 'tc1_3', date: '10 Jan 2026', event: '3 convictions for money laundering.' },
-    ],
-  },
-  {
-    id: 'FIR-2044',
-    title: 'Real estate shell company fraud',
-    station: 'North PS',
-    date: '03 Nov 2025',
-    status: 'Active',
-    similarityScore: 78,
-    dimensions: {
-      entities: 65,
-      methods: 92,
-      locations: 70,
-    },
-    commonEntities: [
-      { name: 'R. Sable', type: 'Person', relation: 'Nominee director' },
-    ],
-    reasoning: [
-      'Identical use of discretionary trusts for ultimate beneficial ownership concealment.',
-      'R. Sable acting as a nominee director across multiple entities.',
-    ],
-    timeline: [
-      { id: 'tc2_1', date: '03 Nov 2025', event: 'Whistleblower report received.' },
-      { id: 'tc2_2', date: '15 Dec 2025', event: 'R. Sable identified.' },
-    ],
-  },
-  {
-    id: 'FIR-1877',
-    title: 'Unlicensed remittance operation',
-    station: 'Central PS',
-    date: '20 Jan 2025',
-    status: 'Chargesheet filed',
-    similarityScore: 66,
-    dimensions: {
-      entities: 40,
-      methods: 75,
-      locations: 90,
-    },
-    commonEntities: [
-      { name: 'Port District Warehouse 12', type: 'Location', relation: 'Operational base' },
-    ],
-    reasoning: [
-      'Geographic overlap: Port District used as an operational hub.',
-      'Similar reliance on cash placement via couriers before digitization.',
-    ],
-    timeline: [
-      { id: 'tc3_1', date: '20 Jan 2025', event: 'Raid on Port District warehouse.' },
-      { id: 'tc3_2', date: '14 May 2025', event: 'Chargesheet filed against 4 couriers.' },
-    ],
-  },
+export const fallbackMatches = [
+  { case_id: 'CASE-002', crime_type: 'Burglary', modus_operandi: 'Rear window entry with crowbar, late night', total_score: 0.82, shared_confirmed_suspect: false, breakdown: { location: 0.42, time: 0.78, mo: 0.91, weapon: 1, narrative: 0.84 } },
+  { case_id: 'CASE-003', crime_type: 'Burglary', modus_operandi: 'Front door lock picked during daytime while owners away', total_score: 0.43, shared_confirmed_suspect: false, breakdown: { location: 0.56, time: 0.22, mo: 0.48, weapon: 0.5, narrative: 0.31 } },
+  { case_id: 'CASE-005', crime_type: 'Vehicle theft', modus_operandi: 'Motorcycle stolen from parking area', total_score: 0.29, shared_confirmed_suspect: true, breakdown: { location: 0.08, time: 0.34, mo: 0.19, weapon: 0.5, narrative: 0.2 } },
 ];

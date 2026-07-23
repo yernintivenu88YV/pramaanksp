@@ -10,22 +10,20 @@ export function ZoneGrid({ children, className = '' }) {
 }
 
 export function PrimaryZone({ span = 8, children, className = '' }) {
-  return <div className={`min-h-0 xl:col-span-${span} ${className}`}>{children}</div>;
+  const spanClass = span === 12 ? 'xl:col-span-12' : span === 10 ? 'xl:col-span-10' : span === 8 ? 'xl:col-span-8' : span === 6 ? 'xl:col-span-6' : 'xl:col-span-8';
+  return <div className={`min-h-0 ${spanClass} ${className}`}>{children}</div>;
 }
 
 export function SupportZone({ span = 4, children, className = '' }) {
-  return <div className={`min-h-0 xl:col-span-${span} ${className}`}>{children}</div>;
+  const spanClass = span === 6 ? 'xl:col-span-6' : span === 4 ? 'xl:col-span-4' : span === 3 ? 'xl:col-span-3' : 'xl:col-span-4';
+  return <div className={`min-h-0 ${spanClass} ${className}`}>{children}</div>;
 }
 
 export function SectionHeader({ eyebrow, title, actions, className = '' }) {
   return (
     <div className={`flex items-center justify-between ${className}`}>
       <div className="flex items-center gap-2">
-        {eyebrow && (
-          <span className="rounded bg-pramaan-elevated px-1.5 py-0.5 text-pramaan-secondary" style={{ fontSize: 10.5, fontWeight: 600, letterSpacing: '0.06em' }}>
-            {eyebrow}
-          </span>
-        )}
+        {eyebrow && <span className="rounded bg-pramaan-elevated px-1.5 py-0.5 text-pramaan-secondary" style={{ fontSize: 10.5, fontWeight: 600, letterSpacing: '0.06em' }}>{eyebrow}</span>}
         <h3 className="text-pramaan-text" style={{ fontSize: 14, fontWeight: 600 }}>{title}</h3>
       </div>
       {actions}
@@ -34,27 +32,22 @@ export function SectionHeader({ eyebrow, title, actions, className = '' }) {
 }
 
 export function Panel({ children, className = '' }) {
-  return (
-    <div className={`overflow-hidden rounded-lg border border-pramaan-border bg-pramaan-surface ${className}`}>
-      {children}
-    </div>
-  );
+  return <div className={`overflow-hidden rounded-lg border border-pramaan-border bg-pramaan-surface ${className}`}>{children}</div>;
 }
 
 export function WorkPanel({ eyebrow, title, actions, children, className = '', bodyClass = 'p-3' }) {
+  const hasHeader = Boolean(eyebrow || title || actions);
   return (
     <div className={`flex flex-col overflow-hidden rounded-lg border border-pramaan-border bg-pramaan-surface ${className}`}>
-      <div className="flex items-center justify-between border-b border-pramaan-border px-3 py-2">
-        <div className="flex items-center gap-2">
-          {eyebrow && (
-            <span className="rounded bg-pramaan-elevated px-1.5 py-0.5 text-pramaan-secondary" style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em' }}>
-              {eyebrow}
-            </span>
-          )}
-          <span className="text-pramaan-text" style={{ fontSize: 13, fontWeight: 600 }}>{title}</span>
+      {hasHeader && (
+        <div className="flex items-center justify-between border-b border-pramaan-border px-3 py-2">
+          <div className="flex items-center gap-2">
+            {eyebrow && <span className="rounded bg-pramaan-elevated px-1.5 py-0.5 text-pramaan-secondary" style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em' }}>{eyebrow}</span>}
+            {title && <span className="text-pramaan-text" style={{ fontSize: 13, fontWeight: 600 }}>{title}</span>}
+          </div>
+          {actions}
         </div>
-        {actions}
-      </div>
+      )}
       <div className={`min-h-0 flex-1 overflow-auto ${bodyClass}`}>{children}</div>
     </div>
   );
@@ -76,9 +69,7 @@ export function CollapsiblePanel({ title, defaultOpen = true, children, classNam
 export function StatTile({ label, value, unit, className = '' }) {
   return (
     <div className={`flex flex-col gap-0.5 ${className}`}>
-      <span className="tnum font-mono text-pramaan-text" style={{ fontSize: 15, fontWeight: 600 }}>
-        {value}{unit && <span className="ml-0.5 text-pramaan-text-secondary" style={{ fontSize: 11 }}>{unit}</span>}
-      </span>
+      <span className="tnum font-mono text-pramaan-text" style={{ fontSize: 15, fontWeight: 600 }}>{value}{unit && <span className="ml-0.5 text-pramaan-text-secondary" style={{ fontSize: 11 }}>{unit}</span>}</span>
       <span className="text-pramaan-text-secondary/80 uppercase" style={{ fontSize: 10.5, fontWeight: 600, letterSpacing: '0.08em' }}>{label}</span>
     </div>
   );

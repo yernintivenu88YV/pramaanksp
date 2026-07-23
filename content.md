@@ -144,6 +144,12 @@ The Pramaan backend is built as a unified, high-performance containerized **Fast
 * **Cloud Deployment**: Deployed unified AppSail container and React frontend to Catalyst Cloud:
   `https://pramaan-50043776375.development.catalystappsail.in`
 
+### Phase 5: Frontend Design Transformation & Slate Deployment
+* **Design Token System & Primitives**: Built a comprehensive design scale (`scale.js` and `elevation.js`) mapping fonts, line-heights, borders, and shadows to a dark-mode command center palette (`#0B0D10` base, `#14171C` surface). Designed and implemented UI primitives (`SeverityBadge`, `ConfidenceWhy`, `AiClaim`, `Cite`, `StatTile`, `WorkPanel`).
+* **Main Shell Components**: Created the `Sidebar` (collapsible category view with counter badges), `TopBar` (omnibar search/ask controls), and `StatusBar` (connected status, security clearance level, and clock ticker).
+* **View Suite**: Implemented 8 fully responsive views: `OverviewView`, `CasesView` (filter registers), `AlertsView` (SIGINT/OSINT feeds), `EntityGraphView` (interactive SVG node topology), `SimilarCasesView` (4D MODUS matches), `ResolutionView` (identity matching weights), `AssistantView` (interactive inline citations), and `AuditView` (tamper-evident history).
+* **Slate Hosting Configuration**: Connected deployment pipelines, defined `"client": {"source": "client"}` mapping in `catalyst.json`, set SPA 404 fallback routing in `client-package.json`, and synced production bundles directly to root/subpath directories for automatic Zoho Catalyst Slate deployment.
+
 ---
 
 ## 5. Issues & Technical Problems Faced and Implemented Solutions
@@ -158,6 +164,8 @@ The Pramaan backend is built as a unified, high-performance containerized **Fast
 | 6 | **Missing LLM Key Blocking Route API** | `/route` threw 400 error when `GEMINI_API_KEY` was missing from environment. | Added rule-based fallback regex classifier in `intent_router_fn.py`. |
 | 7 | **SmartBrowz Gating in Fallback DB Mode** | PDF generation was blocked if database ran in seed/fallback mode even on live Catalyst. | Decoupled SmartBrowz app check from database fallback mode (`getattr(repo, 'app', None)`). |
 | 8 | **Supreme Court Aadhaar Compliance** | Legal ban on using Aadhaar as matching identifier in entity resolution. | Standardized resolution strictly on non-Aadhaar keys (Phone, VRN, DL, Voter ID). |
+| 9 | **Unstyled Frontend After Build** | Missing `import './index.css'` in the main entrypoint (`main.jsx`). Tailwind CSS was never loaded or extracted by Vite. | Added index.css import to main.jsx, successfully compiling the full 44KB styled design sheet. |
+| 10| **Slate Deployment 404 on Subpaths** | Slate served root files but lacked mapping for frontend folder in catalyst.json, routing rules for subpaths (like `/app/index.html`), and SPA fallback. | Added client mapping to catalyst.json, generated direct `/app/index.html` static redirect targets, and configured SPA 404 rewrite fallback in client-package.json. |
 
 ---
 

@@ -1,34 +1,36 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { ChevronDown, Info } from 'lucide-react';
 
-export function Confidence({ score, label }) {
-  const tone = score >= 80 ? 'pramaan-success' : score >= 60 ? 'pramaan-warning' : 'pramaan-critical';
+function toneClasses(score) {
+  if (score >= 80) return { bar: 'bg-pramaan-success', text: 'text-pramaan-success' };
+  if (score >= 60) return { bar: 'bg-pramaan-warning', text: 'text-pramaan-warning' };
+  return { bar: 'bg-pramaan-critical', text: 'text-pramaan-critical' };
+}
+
+export function Confidence({ score = 0, label }) {
+  const tone = toneClasses(score);
   return (
     <div className="flex items-center gap-2">
       <div className="h-1.5 w-16 overflow-hidden rounded-full bg-pramaan-panel">
-        <div className={`h-full rounded-full bg-${tone}`} style={{ width: `${score}%` }} />
+        <div className={`h-full rounded-full ${tone.bar}`} style={{ width: `${score}%` }} />
       </div>
-      <span className={`text-${tone}`} style={{ fontSize: 11, fontWeight: 600 }}>{score}%</span>
+      <span className={tone.text} style={{ fontSize: 11, fontWeight: 600 }}>{score}%</span>
       {label && <span className="text-pramaan-text-secondary" style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em' }}>{label}</span>}
     </div>
   );
 }
 
-export function AiClaim({ score, evidence = [], children }) {
+export function AiClaim({ score = 0, evidence = [], children, claim, confidence }) {
   const [open, setOpen] = useState(false);
-  const tone = score >= 80 ? 'pramaan-success' : score >= 60 ? 'pramaan-warning' : 'pramaan-critical';
+  const finalScore = Math.round(score || (confidence ? confidence * 100 : 0));
   return (
     <div className="rounded-lg border border-pramaan-border bg-pramaan-elevated">
       <div className="p-3">
-        <div className="text-pramaan-text" style={{ fontSize: 13, lineHeight: 1.65 }}>{children}</div>
+        <div className="text-pramaan-text" style={{ fontSize: 13, lineHeight: 1.65 }}>{children || claim}</div>
         <div className="mt-2 flex items-center gap-2">
-          <Confidence score={score} />
+          <Confidence score={finalScore} />
           {evidence.length > 0 && (
-            <button
-              onClick={() => setOpen(!open)}
-              className="ml-auto flex items-center gap-1 text-pramaan-secondary hover:text-pramaan-primary"
-              style={{ fontSize: 10.5, fontWeight: 500 }}
-            >
+            <button onClick={() => setOpen(!open)} className="ml-auto flex items-center gap-1 text-pramaan-secondary hover:text-pramaan-primary" style={{ fontSize: 10.5, fontWeight: 500 }}>
               <Info size={11} strokeWidth={2} /> Why
               <ChevronDown size={12} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
             </button>
@@ -52,9 +54,8 @@ export function AiClaim({ score, evidence = [], children }) {
 
 export function Cite({ id }) {
   return (
-    <sup className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-pramaan-primary/20 text-[10px] font-bold text-pramaan-primary cursor-pointer hover:bg-pramaan-primary hover:text-pramaan-bg ml-0.5">
+    <sup className="ml-0.5 inline-flex h-4 w-4 cursor-pointer items-center justify-center rounded-full bg-pramaan-primary/20 text-[10px] font-bold text-pramaan-primary hover:bg-pramaan-primary hover:text-pramaan-bg">
       {id}
     </sup>
   );
 }
-
