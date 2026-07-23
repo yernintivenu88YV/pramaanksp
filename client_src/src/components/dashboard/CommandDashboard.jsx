@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../../api/client';
 import { ModeBadge } from '../common/ModeBadge';
 import { ExplainabilityTooltip } from '../common/ExplainabilityTooltip';
+import { HotspotMap } from './HotspotMap';
 
 export function CommandDashboard({ activeRole }) {
   const [weights, setWeights] = useState({
@@ -46,8 +47,9 @@ export function CommandDashboard({ activeRole }) {
     const res = await api.getHotspots();
     setHotspotsLoading(false);
 
-    if (res.ok && res.data && res.data.clusters) {
-      setHotspotsData(res.data.clusters);
+    // Backend returns { mode, hotspots: [...] } (not "clusters").
+    if (res.ok && res.data && Array.isArray(res.data.hotspots)) {
+      setHotspotsData(res.data.hotspots);
       setHotspotsMode(res.data.mode || 'seed_fallback');
     } else {
       setHotspotsError(res.error || res.data?.detail || 'Failed to fetch crime hotspots');
@@ -261,33 +263,13 @@ export function CommandDashboard({ activeRole }) {
               <ModeBadge mode={hotspotsMode} />
             </div>
 
-            {hotspotsError && (
-              <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded text-xs">
-                ⚠️ {hotspotsError}
-              </div>
-            )}
-
-            <div className="space-y-3">
-              {hotspotsData.map((h) => (
-                <div key={h.cluster_id} className="bg-[#1b1f26] border border-white/10 rounded-lg p-3.5 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-cyan-400 text-xs flex items-center gap-1">
-                      📍 {h.cluster_id}
-                    </span>
-                    <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded text-[11px] font-bold">
-                      {h.density} Incidents
-                    </span>
-                  </div>
-                  <div className="text-xs text-gray-300 space-y-1">
-                    <div><strong>Primary Crime:</strong> {h.primary_crime}</div>
-                    <div className="text-gray-400"><strong>Centroid:</strong> {h.latitude}, {h.longitude}</div>
-                    <div className="font-mono text-[11px] text-gray-400">
-                      <strong>Cases Included:</strong> {h.case_ids.join(', ')}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {/* Real interactive Leaflet map (OpenStreetMap tiles, no API key). */}
+            <HotspotMap
+              hotspots={hotspotsData}
+              mode={hotspotsMode}
+              loading={hotspotsLoading}
+              error={hotspotsError}
+            />
           </div>
 
           {/* Bilingual Recent Case Feed */}
