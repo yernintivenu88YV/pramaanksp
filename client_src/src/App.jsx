@@ -3,6 +3,7 @@ import { getApiRole, setApiRole } from './api/client';
 import { Sidebar } from './components/shell/Sidebar';
 import { TopBar } from './components/shell/TopBar';
 import { StatusBar } from './components/shell/StatusBar';
+import LoginView from './components/auth/LoginView';
 import OverviewView from './components/views/OverviewView';
 import CasesView from './components/views/CasesView';
 import AlertsView from './components/views/AlertsView';
@@ -19,13 +20,30 @@ export default function App() {
   const [activeRole, setActiveRole] = useState(getApiRole());
   const [view, setView] = useState('overview');
   const [syncing, setSyncing] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [language, setLanguage] = useState('EN');
+  const [userProfile, setUserProfile] = useState({
+    role: 'ACP',
+    title: 'Assistant Commissioner (ACP)',
+    email: 'acp.central@ksp.gov.in',
+    station: 'KSP Command HQ',
+    clearance: 'Level 5 - Full Command'
+  });
 
   const handleRoleChange = (newRole) => {
     setActiveRole(newRole);
     setApiRole(newRole);
-    // If the current view isn't permitted for the new role, move to one that
-    // is, rather than leaving the user staring at a denial they didn't ask for.
     if (!canAccessView(newRole, view)) setView(firstAllowedView(newRole));
+  };
+
+  const handleLogin = (profile) => {
+    setUserProfile(profile);
+    handleRoleChange(profile.role);
+    setShowLoginModal(false);
+  };
+
+  const toggleLanguage = () => {
+    setLanguage((prev) => (prev === 'EN' ? 'KN' : 'EN'));
   };
 
   const viewAllowed = canAccessView(activeRole, view);
@@ -39,11 +57,20 @@ export default function App() {
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col overflow-hidden bg-pramaan-bg font-sans text-pramaan-text">
+    <div className="flex min-h-screen flex-col overflow-hidden bg-pramaan-bg font-sans text-pramaan-text relative">
+      {showLoginModal && <LoginView onLogin={handleLogin} />}
+
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <Sidebar active={view} onChange={setView} activeRole={activeRole} />
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          <TopBar view={view} activeRole={activeRole} onRoleChange={handleRoleChange} />
+          <TopBar
+            view={view}
+            activeRole={activeRole}
+            onRoleChange={handleRoleChange}
+            onOpenLoginModal={() => setShowLoginModal(true)}
+            language={language}
+            onLanguageToggle={toggleLanguage}
+          />
           <div className="min-h-0 flex-1 overflow-auto p-3 sm:p-4 lg:p-5">
             {!viewAllowed && <RestrictedView viewKey={view} activeRole={activeRole} />}
             {viewAllowed && (
