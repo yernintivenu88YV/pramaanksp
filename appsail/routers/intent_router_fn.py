@@ -1,3 +1,4 @@
+import re
 import json
 import logging
 import os
@@ -196,6 +197,25 @@ def _log_conversation(request: Request, query_text: str, result: dict):
         logger.error(f"Conversation logging failed (answer unaffected): {e}")
 
 
+def _self_base_url(request) -> str:
+    """
+    Base URL for this app's own endpoints.
+
+    AppSail terminates TLS at an upstream proxy, so `request.base_url` reports
+    the *internal* scheme (http) while the public endpoint is https. Posting
+    http:// to the https port yields "400 The plain HTTP request was sent to
+    HTTPS port". Honour X-Forwarded-Proto so self-calls use the right scheme.
+    """
+    base = str(request.base_url).rstrip("/")
+    proto = (request.headers.get("x-forwarded-proto") or "").split(",")[0].strip()
+    if proto in ("http", "https"):
+        base = re.sub(r"^https?://", f"{proto}://", base)
+    elif base.startswith("http://") and "localhost" not in base and "127.0.0.1" not in base:
+        # Deployed (non-local) hosts are always served over TLS.
+        base = "https://" + base[len("http://"):]
+    return base
+
+
 def _speech_summary(route_json: dict) -> str:
     if not isinstance(route_json, dict) or route_json.get("error"):
         return "Sorry, that request could not be completed."
@@ -265,7 +285,7 @@ def route(req: RouteRequest, request: Request):
     intent = classification.get("intent")
     logger.info(f"Classified intent: {intent}")
     
-    base_url = str(request.base_url).rstrip("/")
+    base_url = _self_base_url(request)
     headers = {"Content-Type": "application/json"}
     for h in ('cookie', 'authorization', 'x-zc-session-id'):
         val = request.headers.get(h)
@@ -411,7 +431,7 @@ def voice(req: VoiceRequest, request: Request):
             "error": "No transcript produced from audio. Set BHASHINI_* env variables for live ASR."
         }
         
-    base_url = str(request.base_url).rstrip("/")
+    base_url = _self_base_url(request)
     headers = {"Content-Type": "application/json"}
     for h in ('cookie', 'authorization', 'x-zc-session-id'):
         val = request.headers.get(h)

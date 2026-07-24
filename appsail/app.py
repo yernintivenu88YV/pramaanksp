@@ -34,6 +34,14 @@ app.add_middleware(
 # 3. Security Headers & Repository Injection Middleware
 @app.middleware("http")
 async def security_headers_and_repo_middleware(request: Request, call_next):
+    # Initialize the Catalyst SDK from THIS request. AppSail only carries the
+    # Catalyst headers per-request, so this is the only point at which the
+    # Data Store connection can be established (see repositories._ensure_app).
+    try:
+        repo.init_from_request(request)
+    except Exception:  # never let SDK init break request handling
+        pass
+
     # Inject repository instance into request state
     request.state.repo = repo
     
