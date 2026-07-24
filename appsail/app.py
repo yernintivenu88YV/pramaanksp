@@ -34,20 +34,17 @@ app.add_middleware(
 # 3. Security Headers & Repository Injection Middleware
 @app.middleware("http")
 async def security_headers_and_repo_middleware(request: Request, call_next):
-    # Initialize the Catalyst SDK from THIS request. AppSail only carries the
-    # Catalyst headers per-request, so this is the only point at which the
-    # Data Store connection can be established (see repositories._ensure_app).
+    if request.method == "OPTIONS":
+        return await call_next(request)
+
     try:
         repo.init_from_request(request)
-    except Exception:  # never let SDK init break request handling
+    except Exception:
         pass
 
-    # Inject repository instance into request state
     request.state.repo = repo
-    
     response: Response = await call_next(request)
     
-    # Inject secure headers to prevent common vulnerabilities
     response.headers["Content-Security-Policy"] = "default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; img-src 'self' data: https:;"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-Content-Type-Options"] = "nosniff"
@@ -60,11 +57,13 @@ async def security_headers_and_repo_middleware(request: Request, call_next):
 # 4. Central RBAC Gateway Middleware
 @app.middleware("http")
 async def rbac_gateway_middleware(request: Request, call_next):
+    if request.method == "OPTIONS":
+        return await call_next(request)
+
     path = request.url.path
-    # Intercept only API endpoints
     if path.startswith("/server/") and not path.endswith("/health") and not path.endswith("/check_access"):
         resource_needed = "own_case_detail"
-        if path in ("/server/graph_fn/communities", "/server/graph_fn/hotspots"):
+        if path in ("/server/graph_fn/communities", "/server/graph_fn/hotspots", "/server/graph_fn/priority"):
             resource_needed = "aggregate_analytics"
             
         role_str = repo.get_user_role(dict(request.headers))
@@ -78,14 +77,17 @@ async def rbac_gateway_middleware(request: Request, call_next):
         decision = "allow" if allowed else "deny"
         session_id = request.headers.get("X-ZC-Session-ID") or request.headers.get("Cookie") or "session-unknown"
         
-        # Audit decision in Data Store
         repo.insert_audit_log(session_id, role_str, resource_needed, decision)
         
         if not allowed:
-            return JSONResponse(
+            res = JSONResponse(
                 status_code=status.HTTP_403_FORBIDDEN,
                 content={"detail": f"Access Denied: Role '{role_str}' does not have permission '{resource_needed}'"}
             )
+            res.headers["Access-Control-Allow-Origin"] = "*"
+            res.headers["Access-Control-Allow-Headers"] = "*"
+            res.headers["Access-Control-Allow-Methods"] = "*"
+            return res
             
     return await call_next(request)
 
