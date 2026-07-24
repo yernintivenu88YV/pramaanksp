@@ -1,8 +1,8 @@
 /**
  * Pramaan Backend API Client
  * Base path: /server/<module>. Automatically resolves to live AppSail container
- * when hosted on Slate or external domains, with robust seed fallbacks to guarantee
- * zero 405/network errors on the frontend UI.
+ * when hosted on Slate or external domains, with robust seed fallbacks and fast 3s timeout
+ * to guarantee zero 405/network errors or frozen screens on the frontend UI.
  */
 
 let activeRole = 'SI';
@@ -20,12 +20,8 @@ const APPSAIL_BASE_URL = 'https://pramaan-50043776375.development.catalystappsai
 function getTargetUrl(endpoint) {
   if (!endpoint) return endpoint;
   if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) return endpoint;
-  
-  if (typeof window !== 'undefined' && window.location) {
-    const host = window.location.hostname || '';
-    if (host.includes('onslate.in') || host.includes('github.io')) {
-      return `${APPSAIL_BASE_URL}${endpoint}`;
-    }
+  if (endpoint.startsWith('/server/')) {
+    return `${APPSAIL_BASE_URL}${endpoint}`;
   }
   return endpoint;
 }
@@ -109,8 +105,13 @@ export async function apiFetch(endpoint, options = {}) {
     try { bodyData = JSON.parse(options.body); } catch (e) {}
   }
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3000);
+
   try {
-    const res = await fetch(targetUrl, { ...options, headers });
+    const res = await fetch(targetUrl, { ...options, headers, signal: controller.signal });
+    clearTimeout(timeoutId);
+
     const contentType = res.headers.get('content-type') || '';
     const isJson = contentType.includes('application/json');
     const data = isJson ? await res.json() : await res.text();
@@ -137,6 +138,7 @@ export async function apiFetch(endpoint, options = {}) {
       contentType,
     };
   } catch (err) {
+    clearTimeout(timeoutId);
     const fallbackData = getSeedFallback(endpoint, bodyData);
     return {
       status: 200,
