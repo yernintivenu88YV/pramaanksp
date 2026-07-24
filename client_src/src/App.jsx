@@ -11,7 +11,10 @@ import LiveMapView from './components/views/LiveMapView';
 import EntityGraphView from './components/views/EntityGraphView';
 import SimilarCasesView from './components/views/SimilarCasesView';
 import ResolutionView from './components/views/ResolutionView';
+import FaceRecognitionView from './components/views/FaceRecognitionView';
 import AssistantView from './components/views/AssistantView';
+import DocumentSearchView from './components/views/DocumentSearchView';
+import UploadDocumentsView from './components/views/UploadDocumentsView';
 import AuditView from './components/views/AuditView';
 import HelpDeskView from './components/views/HelpDeskView';
 import { RestrictedView } from './components/common/RestrictedView';
@@ -126,7 +129,10 @@ export default function App() {
                 {view === 'graph' && <EntityGraphView activeRole={activeRole} />}
                 {view === 'similar' && <SimilarCasesView activeRole={activeRole} />}
                 {view === 'resolution' && <ResolutionView activeRole={activeRole} />}
+                {view === 'facerec' && <FaceRecognitionView activeRole={activeRole} />}
                 {view === 'assistant' && <AssistantView activeRole={activeRole} />}
+                {view === 'docsearch' && <DocumentSearchView activeRole={activeRole} />}
+                {view === 'docupload' && <UploadDocumentsView activeRole={activeRole} />}
                 {view === 'audit' && <AuditView activeRole={activeRole} />}
                 {view === 'helpdesk' && <HelpDeskView activeRole={activeRole} />}
               </>

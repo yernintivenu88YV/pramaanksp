@@ -8,6 +8,7 @@ from pydantic import BaseModel
 import requests
 
 from rate_limit import limiter
+from appsail.utils.llm_client import generate_response
 from . import bhashini
 
 logger = logging.getLogger("appsail.intent_router")
@@ -77,7 +78,7 @@ def load_env():
             except Exception as e:
                 logger.error(f"Error loading .env: {e}")
 
-def call_llm(query: str, gemini_key: str = None, anthropic_key: str = None) -> dict:
+def call_llm(query: str) -> dict:
     system_instruction = (
         "You are a structured intent classifier for Pramaan, a police crime intelligence platform.\n"
         "Your task is to classify user query intents and extract parameters strictly into JSON matching the schema.\n"
@@ -97,45 +98,16 @@ def call_llm(query: str, gemini_key: str = None, anthropic_key: str = None) -> d
         "}\n"
         "\n"
         "Transliteration Rule for Kannada names:\n"
-        "If a name in the query is written in Kannada script (e.g. 'ಮೊಹಮ್ಮದ್ ರಫಿ' or 'ಮಹಮ್ಮದ್ ರಫಿ'), extract the original Kannada script into 'name_kannada' and provide a romanized transliteration (e.g. 'Mohammad Rafi' or 'Mahammad Rafi') in 'name'. If the name is in English, set 'name_kannada' to null and populate 'name'.\n"
+        "If a name in the query is written in Kannada script, extract original into 'name_kannada' and provide romanized in 'name'.\n"
         "Always respond with a valid JSON object matching this schema. If any parameter field is missing or not mentioned, set it to null or default. Return only raw JSON, no markdown formatting."
     )
 
-    if gemini_key:
-        import google.generativeai as genai
-        genai.configure(api_key=gemini_key)
-        model = genai.GenerativeModel("gemini-3.1-flash-lite")
-        response = model.generate_content(
-            contents=[
-                {"role": "user", "parts": [system_instruction, f"User query: {query}"]}
-            ]
-        )
-        text = response.text
-        start_idx = text.find("{")
-        end_idx = text.rfind("}") + 1
-        if start_idx != -1 and end_idx != -1:
-            return json.loads(text[start_idx:end_idx])
-        return json.loads(text)
-        
-    elif anthropic_key:
-        import anthropic
-        client = anthropic.Anthropic(api_key=anthropic_key)
-        response = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=1000,
-            system=system_instruction,
-            messages=[
-                {"role": "user", "content": f"User query: {query}"}
-            ]
-        )
-        text = response.content[0].text
-        start_idx = text.find("{")
-        end_idx = text.rfind("}") + 1
-        if start_idx != -1 and end_idx != -1:
-            return json.loads(text[start_idx:end_idx])
-        raise ValueError(f"Failed to find JSON block in Claude response: {text}")
-
-    raise ValueError("No LLM API keys provided.")
+    text = generate_response(system_instruction, f"User query: {query}")
+    start_idx = text.find("{")
+    end_idx = text.rfind("}") + 1
+    if start_idx != -1 and end_idx != -1:
+        return json.loads(text[start_idx:end_idx])
+    return json.loads(text)
 
 def _extract_cited_ids(result: dict) -> list:
     """
@@ -235,52 +207,17 @@ def health():
 @limiter.limit("20/minute")
 def route(req: RouteRequest, request: Request):
     load_env()
-    gemini_key = os.getenv("GEMINI_API_KEY")
-    anthropic_key = os.getenv("ANTHROPIC_API_KEY")
     
-    classification = None
-    if not gemini_key and not anthropic_key:
-        logger.warning("No LLM keys found in environment. Falling back to rule-based classification.")
-        # Rule-based fallback classifier
-        query_lower = req.query.lower()
-        if "similar" in query_lower or "similarity" in query_lower or "ಹೋಲುವ" in query_lower or "case-" in query_lower:
-            import re
-            m = re.search(r"case-\d+", query_lower)
-            target_id = m.group(0).upper() if m else "CASE-001"
-            classification = {
-                "intent": "case-similarity-search",
-                "case_similarity_target_id": target_id,
-                "case_similarity_top_k": 3
-            }
-        elif "lookup" in query_lower or "resolve" in query_lower or "entity" in query_lower or "ಹೋಲಿಕೆ" in query_lower:
-            classification = {
-                "intent": "entity-lookup",
-                "entity_lookup_record_a": {"name": "Ramesh"},
-                "entity_lookup_record_b": {"name": "Ramesha"}
-            }
-        elif "network" in query_lower or "traverse" in query_lower or "graph" in query_lower or "ಸಂಪರ್ಕ" in query_lower or "canon-" in query_lower:
-            import re
-            m = re.search(r"canon-\d+", query_lower)
-            canon_id = m.group(0).upper() if m else "CANON-0042"
-            classification = {
-                "intent": "graph-network-query",
-                "graph_query_canonical_id": canon_id
-            }
-        else:
-            classification = {
-                "intent": "case-similarity-search",
-                "case_similarity_target_id": "CASE-001",
-                "case_similarity_top_k": 3
-            }
-    else:
-        try:
-            classification = call_llm(req.query, gemini_key=gemini_key, anthropic_key=anthropic_key)
-        except Exception as e:
-            logger.error(f"LLM classification failed: {e}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"LLM reasoning failed: {str(e)}"
-            )
+    try:
+        classification = call_llm(req.query)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        logger.error(f"LLM classification failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"LLM reasoning failed: {str(e)}"
+        )
         
     intent = classification.get("intent")
     logger.info(f"Classified intent: {intent}")

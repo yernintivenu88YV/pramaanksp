@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { WorkPanel } from '../common/WorkPanel.jsx';
 import { ModeBadge } from '../common/ModeBadge.jsx';
 import { Cite } from '../common/Cite.jsx';
-import { Sparkles, Mic, Globe, Send, Download, RefreshCw, FileText, Fingerprint, Share2 } from 'lucide-react';
+import { Sparkles, Mic, Globe, Send, Download, RefreshCw, FileText, Fingerprint, Share2, Copy } from 'lucide-react';
+import { CitationPanel } from '../ui/CitationPanel.jsx';
 import { api } from '../../api/client.js';
 
 export default function AssistantView({ activeRole = 'ACP' }) {
@@ -25,10 +26,10 @@ export default function AssistantView({ activeRole = 'ACP' }) {
     const targetText = textToSend || query;
     setPending(true);
     setError('');
-    const res = await api.routeQuery(targetText);
+    const res = await api.ragQuery(targetText);
     setPending(false);
     if (!res.ok) {
-      setError(res.error || 'Assistant route failed');
+      setError(res.error || 'Assistant RAG query failed');
       return;
     }
     setResult(res.data);
@@ -127,7 +128,7 @@ export default function AssistantView({ activeRole = 'ACP' }) {
             <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-pramaan-border">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-mono uppercase font-bold text-pramaan-secondary bg-pramaan-secondary/15 px-2 py-0.5 rounded border border-pramaan-secondary/30">
-                  Detected Intent: {result.intent || 'case-similarity-search'}
+                  Detected Intent: {result.intent || 'hybrid-rag-search'}
                 </span>
                 <span className="text-xs font-mono text-pramaan-text-secondary">
                   Engine: <strong className="text-pramaan-text">AppSail Vector Router</strong>
@@ -139,12 +140,21 @@ export default function AssistantView({ activeRole = 'ACP' }) {
               <span className="text-[11px] font-mono uppercase font-bold text-pramaan-text-secondary block">
                 Evidence Synthesis & Citation Output:
               </span>
-
               <div className="p-4 rounded-lg bg-pramaan-surface border border-pramaan-border text-pramaan-text leading-relaxed space-y-2 font-sans">
-                {result.rag_summary || (
-                  <p>
-                    Target query routed to Case Twin Vector similarity engine. Matched target CASE-001 <Cite id="CASE-001" /> against seeded registry. Serial burglary signature correlates to canonical suspect CANON-0042 <Cite id="CANON-0042" /> with 88% vector overlap.
-                  </p>
+                <p className="text-sm text-pramaan-text mb-4 leading-relaxed">{result.answer || result.rag_summary}</p>
+                {result.citations && (
+                  <CitationPanel 
+                    citations={result.citations} 
+                    evidence={result.evidence} 
+                    confidenceScore={result.confidence_score} 
+                  />
+                )}
+                {result.pipeline && (
+                  <div className="mt-4 pt-4 border-t border-pramaan-border">
+                    <span className="text-xs font-semibold px-2 py-1 bg-pramaan-surface border border-pramaan-border rounded-md text-pramaan-text-secondary">
+                      Pipeline Used: {result.pipeline}
+                    </span>
+                  </div>
                 )}
               </div>
             </div>

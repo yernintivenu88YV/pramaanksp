@@ -41,8 +41,11 @@ export const VIEW_ACCESS = {
   resolution: { any: ['own_case_detail'],   label: 'Identity Resolution' },
   similar:    { any: ['own_case_detail'],   label: 'Case Twins' },
   graph:      { any: ['own_case_detail'],   label: 'Entity Graph' },
+  facerec:    { any: ['own_case_detail'],   label: 'Face Recognition' },
   assistant:  { any: ['own_case_detail'],   label: 'AI Assistant' },
   helpdesk:   { any: AGGREGATE,             label: 'Public Help Desk' },
+  docsearch:  { any: ['own_case_detail'],   label: 'Document Search' },
+  docupload:  { any: ['own_case_detail'],   label: 'Upload Documents' },
 };
 
 export function permissionsFor(role) {

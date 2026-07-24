@@ -99,6 +99,8 @@ KSP/
 │   └── seed_data.sql            #   SQL seed statements
 ├── catalyst.json                # Catalyst deployment manifest (binds client & appsail)
 ├── DEPLOY_RUNBOOK.md            # Actionable steps for cloud hosting
+├── docs/
+│   └── HYBRID_RAG_GUIDE.md      # Hybrid RAG Architecture & Deployment Guide
 └── content.md                   # Chronological logs and development summaries
 ```
 

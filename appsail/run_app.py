@@ -3,6 +3,7 @@ import sys
 import json
 import logging
 import traceback
+import subprocess
 
 # Ensure this directory is importable and is the CWD.
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -12,6 +13,9 @@ os.chdir(current_dir)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("appsail.run")
+
+pip_output = "Disabled manual pip install to avoid startup timeouts."
+
 
 
 def _listen_port() -> int:
@@ -81,9 +85,9 @@ except BaseException as e:  # BaseException so even SystemExit/import-time exits
         "status": "fallback_error",
         "error": str(e),
         "traceback": tb,
-        "python": sys.version,
         "cwd": os.getcwd(),
         "diag": diag,
+        "pip_diagnostic_output": pip_output,
     }).encode("utf-8")
 
     class DiagnosticHandler(BaseHTTPRequestHandler):

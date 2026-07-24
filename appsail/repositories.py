@@ -463,3 +463,107 @@ class CatalystRepository:
         except Exception as e:
             logger.error(f"Failed to fetch warrants from Catalyst Data Store: {e}")
             return MOCK_WARRANTS
+
+    def insert_face_record(self, record: dict):
+        if self.is_fallback():
+            if not hasattr(self, '_mock_face_dataset'):
+                self._mock_face_dataset = {}
+            self._mock_face_dataset[record['person_id']] = record
+            return True
+        try:
+            db = self.app.datastore()
+            table = db.table("PoliceFaceDataset")
+            
+            # Check if exists
+            zcql = self.app.zcql()
+            rows = zcql.execute_query(f"SELECT ROWID FROM PoliceFaceDataset WHERE person_id = '{record['person_id']}'")
+            
+            row_data = {
+                "person_id": record["person_id"],
+                "full_name": record["full_name"],
+                "age": record.get("age"),
+                "gender": record.get("gender"),
+                "case_number": record.get("case_number"),
+                "station": record.get("station"),
+                "status": record.get("status"),
+                "notes": record.get("notes"),
+                "image_path": record.get("image_path"),
+                "embedding": json.dumps(record.get("embedding"))
+            }
+            
+            if rows:
+                row_id = rows[0].get("PoliceFaceDataset").get("ROWID")
+                row_data["ROWID"] = row_id
+                table.update_row(row_data)
+            else:
+                table.insert_row(row_data)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to insert face record: {e}")
+            return False
+
+    def get_face_dataset(self):
+        if self.is_fallback():
+            if not hasattr(self, '_mock_face_dataset'):
+                return []
+            return list(self._mock_face_dataset.values())
+        try:
+            zcql = self.app.zcql()
+            rows = zcql.execute_query("SELECT person_id, full_name, age, gender, case_number, station, status, notes, image_path FROM PoliceFaceDataset")
+            return [r.get("PoliceFaceDataset") for r in rows if r.get("PoliceFaceDataset")]
+        except Exception as e:
+            logger.error(f"Failed to fetch face dataset: {e}")
+            return []
+
+    def delete_face_record(self, person_id: str):
+        if self.is_fallback():
+            if hasattr(self, '_mock_face_dataset') and person_id in self._mock_face_dataset:
+                del self._mock_face_dataset[person_id]
+                return True
+            return False
+        try:
+            zcql = self.app.zcql()
+            rows = zcql.execute_query(f"SELECT ROWID FROM PoliceFaceDataset WHERE person_id = '{person_id}'")
+            if rows:
+                row_id = rows[0].get("PoliceFaceDataset").get("ROWID")
+                self.app.datastore().table("PoliceFaceDataset").delete_row(row_id)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to delete face record: {e}")
+            return False
+
+    def search_faces(self, embedding: list, top_k: int = 3, threshold: float = 0.4):
+        import numpy as np
+        if self.is_fallback():
+            if not hasattr(self, '_mock_face_dataset'):
+                return []
+            records = list(self._mock_face_dataset.values())
+        else:
+            try:
+                zcql = self.app.zcql()
+                rows = zcql.execute_query("SELECT person_id, full_name, age, gender, case_number, station, status, notes, image_path, embedding FROM PoliceFaceDataset")
+                records = []
+                for r in rows:
+                    rec = r.get("PoliceFaceDataset")
+                    if rec and rec.get("embedding"):
+                        rec["embedding"] = json.loads(rec["embedding"])
+                        records.append(rec)
+            except Exception as e:
+                logger.error(f"Failed to fetch dataset for search: {e}")
+                return []
+
+        results = []
+        emb_vec = np.array(embedding)
+        for record in records:
+            if not record.get('embedding'):
+                continue
+            db_vec = np.array(record['embedding'])
+            dist = 1.0 - np.dot(emb_vec, db_vec) / (np.linalg.norm(emb_vec) * np.linalg.norm(db_vec))
+            if dist < threshold:
+                matched = {k: v for k, v in record.items() if k != 'embedding'}
+                matched['distance'] = dist
+                matched['similarity'] = max(0, 100 - (dist * 100))
+                results.append(matched)
+                
+        results.sort(key=lambda x: x['distance'])
+        return results[:top_k]

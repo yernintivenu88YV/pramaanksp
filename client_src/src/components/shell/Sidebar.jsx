@@ -2,7 +2,8 @@ import { useState } from 'react';
 import {
   LayoutDashboard, FolderKanban, BellRing, Share2,
   MapPinned, Fingerprint, CopyCheck, ScrollText,
-  ShieldCheck, Sparkles, Lock, HelpCircle
+  ShieldCheck, Sparkles, Lock, HelpCircle,
+  Search, Upload, ScanFace
 } from 'lucide-react';
 import { type } from '../../design/scale';
 import { canAccessView, ROLE_LABELS, requiredPermissionFor } from '../../access';
@@ -22,6 +23,7 @@ const groupsConfig = [
       { key: 'cases', labelKey: 'navCases', icon: FolderKanban, badge: 7 },
       { key: 'resolution', labelKey: 'navResolution', icon: Fingerprint },
       { key: 'similar', labelKey: 'navSimilar', icon: CopyCheck },
+      { key: 'facerec', labelKey: 'navFaceRec', icon: ScanFace },
     ],
   },
   {
@@ -30,6 +32,8 @@ const groupsConfig = [
       { key: 'map', labelKey: 'navMap', icon: MapPinned },
       { key: 'graph', labelKey: 'navGraph', icon: Share2 },
       { key: 'assistant', labelKey: 'navAssistant', icon: Sparkles },
+      { key: 'docsearch', labelKey: 'navDocSearch', icon: Search },
+      { key: 'docupload', labelKey: 'navDocUpload', icon: Upload },
     ],
   },
   {
