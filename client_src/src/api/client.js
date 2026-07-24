@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Pramaan Backend API Client
  * Base path: /server/<module>. In local/demo mode the backend maps the
  * Authorization bearer token to an RBAC role; on Catalyst this is replaced by
@@ -58,17 +58,29 @@ export async function apiFetch(endpoint, options = {}) {
   }
 }
 
+const P = '/server/pramaan';
+
 export const api = {
-  getHealth: () => apiFetch('/server/gateway_fn/health'),
-  checkAccess: (resource) => apiFetch('/server/gateway_fn/check_access', { method: 'POST', body: JSON.stringify({ resource }) }),
-  resolvePair: (recordA, recordB) => apiFetch('/server/entity_resolution_fn/resolve', { method: 'POST', body: JSON.stringify({ record_a: recordA, record_b: recordB }) }),
-  matchCaseTwin: (target, candidates, topK = 4) => apiFetch('/server/case_twin_fn/match', { method: 'POST', body: JSON.stringify({ target, candidates, top_k: topK }) }),
-  routeQuery: (query) => apiFetch('/server/intent_router_fn/route', { method: 'POST', body: JSON.stringify({ query }) }),
-  routeVoice: (audioBase64, lang = 'kn') => apiFetch('/server/intent_router_fn/voice', { method: 'POST', body: JSON.stringify({ audio_base64: audioBase64, source_language: lang, tts: true }) }),
-  traverseGraph: (canonicalId) => apiFetch('/server/graph_fn/traverse', { method: 'POST', body: JSON.stringify({ canonical_id: canonicalId }) }),
-  getCommunities: () => apiFetch('/server/graph_fn/communities', { method: 'POST' }),
-  getPriorityScores: (weights) => apiFetch('/server/graph_fn/priority', { method: 'POST', body: JSON.stringify(weights) }),
-  getHotspots: () => apiFetch('/server/graph_fn/hotspots', { method: 'POST' }),
-  exportDossierPdf: (caseId, topK = 3) => apiFetch('/server/export_fn/dossier_pdf', { method: 'POST', body: JSON.stringify({ case_id: caseId, top_k: topK }) }),
-  exportConversationPdf: (sessionId) => apiFetch('/server/export_fn/conversation_pdf', { method: 'POST', body: JSON.stringify({ session_id: sessionId }) }),
+  getHealth: () => apiFetch(`${P}/server/gateway_fn/health`),
+  checkAccess: (resource) => apiFetch(`${P}/server/gateway_fn/check_access`, { method: 'POST', body: JSON.stringify({ resource }) }),
+  resolvePair: (recordA, recordB) => apiFetch(`${P}/server/entity_resolution_fn/resolve`, { method: 'POST', body: JSON.stringify({ record_a: recordA, record_b: recordB }) }),
+  matchCaseTwin: (target, candidates, topK = 4) => apiFetch(`${P}/server/case_twin_fn/match`, { method: 'POST', body: JSON.stringify({ target, candidates, top_k: topK }) }),
+  routeQuery: (query) => apiFetch(`${P}/server/intent_router_fn/route`, { method: 'POST', body: JSON.stringify({ query }) }),
+  routeVoice: (audioBase64, lang = 'kn') => apiFetch(`${P}/server/intent_router_fn/voice`, { method: 'POST', body: JSON.stringify({ audio_base64: audioBase64, source_language: lang, tts: true }) }),
+  traverseGraph: (canonicalId) => apiFetch(`${P}/server/graph_fn/traverse`, { method: 'POST', body: JSON.stringify({ canonical_id: canonicalId }) }),
+  getCommunities: () => apiFetch(`${P}/server/graph_fn/communities`, { method: 'POST' }),
+  getPriorityScores: (weights) => apiFetch(`${P}/server/graph_fn/priority`, { method: 'POST', body: JSON.stringify(weights) }),
+  getHotspots: () => apiFetch(`${P}/server/graph_fn/hotspots`, { method: 'POST' }),
+  exportDossierPdf: (caseId, topK = 3) => apiFetch(`${P}/server/export_fn/dossier_pdf`, { method: 'POST', body: JSON.stringify({ case_id: caseId, top_k: topK }) }),
+  exportConversationPdf: (sessionId) => apiFetch(`${P}/server/export_fn/conversation_pdf`, { method: 'POST', body: JSON.stringify({ session_id: sessionId }) }),
+  ragQuery: (query) => apiFetch(`${P}/server/rag/query`, { method: 'POST', body: JSON.stringify({ query }) }),
+  ragUpload: (formData) => apiFetch(`${P}/server/rag/upload`, { method: 'POST', body: formData, headers: { 'Content-Type': undefined } }),
+  ragSearch: (query) => apiFetch(`${P}/server/rag/search`, { method: 'POST', body: JSON.stringify({ query }) }),
+  
+  // Face Recognition & Dataset Management
+  getFaceDataset: () => apiFetch(`${P}/server/face_fn/dataset`),
+  addFaceRecord: (formData) => apiFetch(`${P}/server/face_fn/dataset`, { method: 'POST', body: formData, headers: { 'Content-Type': undefined } }),
+  deleteFaceRecord: (personId) => apiFetch(`${P}/server/face_fn/dataset/${personId}`, { method: 'DELETE' }),
+  searchFace: (formData) => apiFetch(`${P}/server/face_fn/search`, { method: 'POST', body: formData, headers: { 'Content-Type': undefined } }),
+  explainCandidate: (personId, metadata) => apiFetch(`${P}/server/face_fn/explain_candidate`, { method: 'POST', body: JSON.stringify({ person_id: personId, metadata }) })
 };

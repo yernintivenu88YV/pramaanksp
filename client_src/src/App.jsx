@@ -10,7 +10,10 @@ import LiveMapView from './components/views/LiveMapView';
 import EntityGraphView from './components/views/EntityGraphView';
 import SimilarCasesView from './components/views/SimilarCasesView';
 import ResolutionView from './components/views/ResolutionView';
+import FaceRecognitionView from './components/views/FaceRecognitionView';
 import AssistantView from './components/views/AssistantView';
+import DocumentSearchView from './components/views/DocumentSearchView';
+import UploadDocumentsView from './components/views/UploadDocumentsView';
 import AuditView from './components/views/AuditView';
 import { RestrictedView } from './components/common/RestrictedView';
 import { canAccessView, firstAllowedView } from './access';
@@ -55,7 +58,10 @@ export default function App() {
                 {view === 'graph' && <EntityGraphView />}
                 {view === 'similar' && <SimilarCasesView />}
                 {view === 'resolution' && <ResolutionView />}
+                {view === 'facerec' && <FaceRecognitionView />}
                 {view === 'assistant' && <AssistantView />}
+                {view === 'docsearch' && <DocumentSearchView />}
+                {view === 'docupload' && <UploadDocumentsView />}
                 {view === 'audit' && <AuditView />}
               </>
             )}

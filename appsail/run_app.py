@@ -3,6 +3,7 @@ import sys
 import json
 import logging
 import traceback
+import subprocess
 
 # Ensure this directory is importable and is the CWD.
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -12,6 +13,16 @@ os.chdir(current_dir)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("appsail.run")
+
+pip_output = ""
+try:
+    logger.info("Running manual pip install for diagnostics...")
+    pip_output = subprocess.check_output([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"], stderr=subprocess.STDOUT).decode("utf-8")
+except subprocess.CalledProcessError as e:
+    pip_output = f"PIP INSTALL FAILED with code {e.returncode}:\n{e.output.decode('utf-8')}"
+except Exception as e:
+    pip_output = f"PIP INSTALL EXCEPTION: {e}"
+
 
 
 def _listen_port() -> int:
@@ -81,9 +92,9 @@ except BaseException as e:  # BaseException so even SystemExit/import-time exits
         "status": "fallback_error",
         "error": str(e),
         "traceback": tb,
-        "python": sys.version,
         "cwd": os.getcwd(),
         "diag": diag,
+        "pip_diagnostic_output": pip_output,
     }).encode("utf-8")
 
     class DiagnosticHandler(BaseHTTPRequestHandler):

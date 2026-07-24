@@ -3,6 +3,7 @@ import {
   LayoutDashboard, FolderKanban, BellRing, Share2,
   MapPinned, Fingerprint, CopyCheck, ScrollText,
   Settings, ShieldCheck, ChevronsLeft, Sparkles, Lock,
+  Search, Upload, ScanFace
 } from 'lucide-react';
 import { type } from '../../design/scale';
 import { canAccessView, ROLE_LABELS, requiredPermissionFor } from '../../access';
@@ -21,6 +22,7 @@ const groups = [
       { key: 'cases', label: 'Case Register', icon: FolderKanban, badge: 7 },
       { key: 'resolution', label: 'Identity Resolution', icon: Fingerprint },
       { key: 'similar', label: 'Case Twins', icon: CopyCheck },
+      { key: 'facerec', label: 'Face Recognition', icon: ScanFace },
     ],
   },
   {
@@ -29,6 +31,8 @@ const groups = [
       { key: 'map', label: 'Live Crime Map', icon: MapPinned },
       { key: 'graph', label: 'Entity Graph', icon: Share2 },
       { key: 'assistant', label: 'AI Assistant', icon: Sparkles },
+      { key: 'docsearch', label: 'Document Search', icon: Search },
+      { key: 'docupload', label: 'Upload Documents', icon: Upload },
     ],
   },
   {

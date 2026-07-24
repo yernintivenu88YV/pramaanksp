@@ -1,8 +1,9 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { WorkPanel } from '../ui/Layout.jsx';
 import { Cite } from '../ui/AI.jsx';
 import { Sparkles, Download, Copy, Send, RefreshCw } from 'lucide-react';
 import { Button } from '../ui/Controls.jsx';
+import { CitationPanel } from '../ui/CitationPanel.jsx';
 import { api } from '../../api/client.js';
 
 export default function AssistantView() {
@@ -15,10 +16,10 @@ export default function AssistantView() {
   async function ask() {
     setPending(true);
     setError('');
-    const res = await api.routeQuery(query);
+    const res = await api.ragQuery(query);
     setPending(false);
     if (!res.ok) {
-      setError(res.error || 'Assistant route failed');
+      setError(res.error || 'Assistant RAG query failed');
       return;
     }
     setResult(res.data);
@@ -68,9 +69,29 @@ export default function AssistantView() {
           </section>
 
           <section>
-            <h2 className="mb-2 border-b border-pramaan-border pb-1 text-sm font-semibold text-pramaan-primary">Routed Result</h2>
+            <h2 className="mb-2 border-b border-pramaan-border pb-1 text-sm font-semibold text-pramaan-primary">Routed AI Result</h2>
             <div className="rounded border border-pramaan-border bg-pramaan-surface p-4">
-              {pending ? <div className="flex items-center gap-2 text-sm text-pramaan-text-secondary"><RefreshCw size={14} className="animate-spin" /> Waiting for AppSail route...</div> : result ? <pre className="max-h-[360px] overflow-auto whitespace-pre-wrap text-xs text-pramaan-text-secondary">{JSON.stringify(result, null, 2)}</pre> : <p className="text-sm text-pramaan-text-secondary">Send the sample query to exercise `/server/intent_router_fn/route`.</p>}
+              {pending ? (
+                <div className="flex items-center gap-2 text-sm text-pramaan-text-secondary">
+                  <RefreshCw size={14} className="animate-spin" /> Waiting for Hybrid RAG Agent...
+                </div>
+              ) : result ? (
+                <div>
+                  <p className="text-sm text-pramaan-text mb-4 leading-relaxed">{result.answer}</p>
+                  <CitationPanel 
+                    citations={result.citations} 
+                    evidence={result.evidence} 
+                    confidenceScore={result.confidence_score} 
+                  />
+                  <div className="mt-4 pt-4 border-t border-pramaan-border">
+                    <span className="text-xs font-semibold px-2 py-1 bg-pramaan-surface border border-pramaan-border rounded-md text-pramaan-text-secondary">
+                      Pipeline Used: {result.pipeline}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-pramaan-text-secondary">Send a query to the Hybrid RAG engine to begin.</p>
+              )}
             </div>
           </section>
 
