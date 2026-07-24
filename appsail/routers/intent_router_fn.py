@@ -312,12 +312,23 @@ def route(req: RouteRequest, request: Request):
         
         payload = {"record_a": rec_a, "record_b": rec_b}
         resp = requests.post(f"{base_url}/server/entity_resolution_fn/resolve", json=payload, headers=headers, timeout=10)
+        
+        resp_json = resp.json() if resp.status_code == 200 else {}
+        rag_summary = ""
+        if resp.status_code == 200:
+            decision = resp_json.get("decision", "reject")
+            evidence = ", ".join(resp_json.get("evidence", []))
+            score_text = f" (probabilistic score: {resp_json['score']:.3f})" if resp_json.get("score") is not None else " (deterministic match)"
+            rag_summary = f"Pramaan Local RAG has resolved the suspect pair as: **{decision.upper()}**{score_text}.\n\nSupporting evidence compiled: {evidence}."
+        else:
+            rag_summary = f"Error performing local RAG entity resolution: {resp.text}"
 
         result = {
             "intent": "entity-lookup",
             "classification": classification,
             "status_code": resp.status_code,
-            "response": resp.json() if resp.status_code == 200 else resp.text
+            "response": resp_json,
+            "rag_summary": rag_summary
         }
         _log_conversation(request, req.query, result)
         return result
@@ -337,11 +348,11 @@ def route(req: RouteRequest, request: Request):
             
         # Try database fetch, fall back to seed
         repo = request.state.repo
-        cases = repo.fetch_cases()
+        cases_list = repo.fetch_cases()
         links = repo.fetch_links()
         
         target = None
-        for c in cases:
+        for c in cases_list:
             if c["case_id"] == target_id:
                 target = c
                 break
@@ -363,7 +374,7 @@ def route(req: RouteRequest, request: Request):
         target["canonical_suspect_ids"] = target_suspects
         
         candidates = []
-        for c in cases:
+        for c in cases_list:
             if c["case_id"] == target["case_id"]:
                 continue
             cand = dict(c)
@@ -380,12 +391,27 @@ def route(req: RouteRequest, request: Request):
             "top_k": top_k
         }
         resp = requests.post(f"{base_url}/server/case_twin_fn/match", json=payload, headers=headers, timeout=15)
+        
+        resp_json = resp.json() if resp.status_code == 200 else {}
+        rag_summary = ""
+        if resp.status_code == 200:
+            matches = resp_json.get("top_matches", [])
+            match_lines = []
+            for m in matches:
+                breakdown = m.get("breakdown") or {}
+                breakdown_str = f"MO: {breakdown.get('mo', 0):.2f}, Location: {breakdown.get('location', 0):.2f}, Time: {breakdown.get('time', 0):.2f}"
+                match_lines.append(f"- **{m['case_id']}** (overall score: {m['total_score']:.3f}) [{breakdown_str}]")
+            match_text = "\n".join(match_lines)
+            rag_summary = f"Pramaan Local RAG signature matching has resolved twins for target **{target_id}**:\n\n{match_text}\n\nThis intelligence acts as an automated lead generator for MODUS twin patterns."
+        else:
+            rag_summary = f"Error performing local RAG case twin lookup: {resp.text}"
 
         result = {
             "intent": "case-similarity-search",
             "classification": classification,
             "status_code": resp.status_code,
-            "response": resp.json() if resp.status_code == 200 else resp.text
+            "response": resp_json,
+            "rag_summary": rag_summary
         }
         _log_conversation(request, req.query, result)
         return result
@@ -404,13 +430,34 @@ def route(req: RouteRequest, request: Request):
         payload = {"canonical_id": canonical_id}
         resp = requests.post(f"{base_url}/server/graph_fn/traverse", json=payload, headers=headers, timeout=15)
         resp_json = resp.json() if resp.status_code == 200 else {}
+        
+        rag_summary = ""
+        if resp.status_code == 200:
+            nodes = resp_json.get("nodes", [])
+            cases_matched = [n["id"] for n in nodes if n.get("label") == "Case"]
+            vehicles_matched = [n["id"] for n in nodes if n.get("label") == "Vehicle"]
+            persons_matched = [n.get("properties", {}).get("name") or n["id"] for n in nodes if n.get("label") == "Person"]
+            
+            summary_parts = []
+            if cases_matched:
+                summary_parts.append(f"accused in cases: {', '.join(cases_matched)}")
+            if vehicles_matched:
+                summary_parts.append(f"associated vehicles: {', '.join(vehicles_matched)}")
+            if persons_matched:
+                summary_parts.append(f"co-accused associates: {', '.join(persons_matched)}")
+                
+            connections_text = "; ".join(summary_parts) if summary_parts else "no active connections"
+            rag_summary = f"Pramaan Local RAG network traversal for **{canonical_id}** revealed connections to:\n\n- {connections_text}."
+        else:
+            rag_summary = f"Error performing local RAG network traversal: {resp.text}"
 
         result = {
             "intent": "graph-network-query",
             "mode": resp_json.get("mode", "unknown"),
             "classification": classification,
             "status_code": resp.status_code,
-            "response": resp_json if resp.status_code == 200 else resp.text
+            "response": resp_json,
+            "rag_summary": rag_summary
         }
         _log_conversation(request, req.query, result)
         return result

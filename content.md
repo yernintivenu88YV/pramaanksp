@@ -155,6 +155,7 @@ The Pramaan backend is built as a unified, high-performance containerized **Fast
 * **Datathon Solution Evaluation**: Overhauled `README.md` to map the KSP problem statement to concrete implementation architectures across a 10-point Solution Alignment matrix (voice interfaces, graph communities, spatial hotspots, and secure RBAC).
 * **TLS Deployment & Routing Fixes**: Resolved internal API call failures resulting from TLS terminations at the upstream AppSail gateway proxy. Implemented custom `_self_base_url` resolution to preserve scheme protocols.
 * **Dynamic Catalyst SDK Binding**: Moved database and SDK initialization from static startup hooks to request-level middleware, ensuring credentials injected during HTTP calls are preserved.
+* **Local Semantic RAG Pipeline**: Built a fully offline, self-contained RAG summary generator (`rag_summary`) in `intent_router_fn.py`. The local pipeline processes query parameters against retrieved data records and returns rich natural language assessments to the UI without requiring external Gemini API keys.
 
 ---
 
@@ -167,7 +168,7 @@ The Pramaan backend is built as a unified, high-performance containerized **Fast
 | 3 | **CLI Blocking in Automated Scripts** | `catalyst init/deploy` hung waiting for TTY stdin prompts in non-interactive shell. | Built Node.js wrapper scripts (`run_init.js`, `run_deploy.js`) mocking TTY stdin responses. |
 | 4 | **SDK Init Failure in Local Tests** | `zcatalyst_sdk.initialize()` failed locally due to missing cloud headers (`X-ZC-Session-ID`). | Built `CatalystRepository` fallback mode using mock datasets & in-memory audit logs. |
 | 5 | **Module Shadowing from Local `pip -t .`** | Local wheel packages inside `appsail/` corrupted standard Python package imports. | Cleaned untracked package directories from `appsail/` using `git clean`. |
-| 6 | **Missing LLM Key Blocking Route API** | `/route` threw 400 error when `GEMINI_API_KEY` was missing from environment. | Added rule-based fallback regex classifier in `intent_router_fn.py`. |
+| 6 | **Missing LLM Key Blocking Route API** | `/route` threw 400 error when `GEMINI_API_KEY` was missing from environment. | Built a local Semantic RAG model that handles routing locally via TF-IDF / pattern matching and synthesizes natural language summaries entirely offline. |
 | 7 | **SmartBrowz Gating in Fallback DB Mode** | PDF generation was blocked if database ran in seed/fallback mode even on live Catalyst. | Decoupled SmartBrowz app check from database fallback mode (`getattr(repo, 'app', None)`). |
 | 8 | **Supreme Court Aadhaar Compliance** | Legal ban on using Aadhaar as matching identifier in entity resolution. | Standardized resolution strictly on non-Aadhaar keys (Phone, VRN, DL, Voter ID). |
 | 9 | **Unstyled Frontend After Build** | Missing `import './index.css'` in the main entrypoint (`main.jsx`). Tailwind CSS was never loaded or extracted by Vite. | Added index.css import to main.jsx, successfully compiling the full 44KB styled design sheet. |

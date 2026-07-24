@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { WorkPanel } from '../ui/Layout.jsx';
 import { Cite } from '../ui/AI.jsx';
 import { Sparkles, Download, Copy, Send, RefreshCw } from 'lucide-react';
@@ -62,9 +62,15 @@ export default function AssistantView() {
         <div className="space-y-6">
           <section>
             <h2 className="mb-2 border-b border-pramaan-border pb-1 text-sm font-semibold text-pramaan-primary">Current Assessment</h2>
-            <p className="text-sm leading-relaxed text-pramaan-text-secondary">
-              CASE-001 should be handled as a connected property-crime investigation. The strongest automated signals are the canonical suspect CANON-0042 <Cite id="1" />, exact vehicle registration match KA-02-MB-1234 <Cite id="2" />, and a high-similarity burglary signature against CASE-002 <Cite id="3" />.
-            </p>
+            {result?.rag_summary ? (
+              <div className="rounded border border-pramaan-border bg-pramaan-surface p-4 text-sm leading-relaxed text-pramaan-text whitespace-pre-wrap">
+                {result.rag_summary}
+              </div>
+            ) : (
+              <p className="text-sm leading-relaxed text-pramaan-text-secondary">
+                CASE-001 should be handled as a connected property-crime investigation. The strongest automated signals are the canonical suspect CANON-0042 <Cite id="1" />, exact vehicle registration match KA-02-MB-1234 <Cite id="2" />, and a high-similarity burglary signature against CASE-002 <Cite id="3" />.
+              </p>
+            )}
           </section>
 
           <section>
