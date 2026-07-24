@@ -40,6 +40,7 @@ export const VIEW_ACCESS = {
   cases:      { any: ['own_case_detail'],   label: 'Case Register' },
   resolution: { any: ['own_case_detail'],   label: 'Identity Resolution' },
   similar:    { any: ['own_case_detail'],   label: 'Case Twins' },
+  history:    { any: ['own_case_detail'],   label: 'Investigation History' },
   graph:      { any: ['own_case_detail'],   label: 'Entity Graph' },
   facerec:    { any: ['own_case_detail'],   label: 'Face Recognition' },
   assistant:  { any: ['own_case_detail'],   label: 'AI Assistant' },

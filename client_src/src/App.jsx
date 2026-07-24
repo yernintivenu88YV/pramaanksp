@@ -128,6 +128,7 @@ export default function App() {
                 {view === 'map' && <LiveMapView activeRole={activeRole} />}
                 {view === 'graph' && <EntityGraphView activeRole={activeRole} />}
                 {view === 'similar' && <SimilarCasesView activeRole={activeRole} />}
+                {view === 'history' && <HistoryView activeRole={activeRole} />}
                 {view === 'resolution' && <ResolutionView activeRole={activeRole} />}
                 {view === 'facerec' && <FaceRecognitionView activeRole={activeRole} />}
                 {view === 'assistant' && <AssistantView activeRole={activeRole} />}

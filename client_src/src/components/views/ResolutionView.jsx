@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { WorkPanel } from '../common/WorkPanel.jsx';
 import { ModeBadge } from '../common/ModeBadge.jsx';
 import { Cite } from '../common/Cite.jsx';
-import { Fingerprint, ArrowRightLeft, ShieldCheck, CheckCircle2, AlertTriangle, XCircle, RefreshCw, User, Phone, Car, MapPin } from 'lucide-react';
+import { Fingerprint, ArrowRightLeft, ShieldCheck, CheckCircle2, AlertTriangle, XCircle, RefreshCw, User, Phone, Car, MapPin, Upload } from 'lucide-react';
 import { api } from '../../api/client.js';
+import FileUploadZone from '../common/FileUploadZone.jsx';
 
 export default function ResolutionView() {
   const [recordA, setRecordA] = useState({
@@ -156,6 +157,26 @@ export default function ResolutionView() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Biometric & Evidence File Upload */}
+        <div className="mb-5 p-4 rounded-lg border border-pramaan-border bg-pramaan-elevated/60 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-pramaan-text font-mono uppercase tracking-wider flex items-center gap-1.5">
+              <Upload size={14} className="text-pramaan-primary" /> Optional Biometric Photo & Document Upload (Zia AI Scan)
+            </span>
+            <span className="text-[10px] font-mono text-pramaan-text-secondary">Supported: CCTV Stills, Driver Licenses, Scanned FIRs</span>
+          </div>
+          <FileUploadZone
+            label="Upload Suspect Photo or Identity Card"
+            sublabel="Zia Face Analytics & OCR will auto-extract facial landmarks and suspect details"
+            onFileSelect={(data) => {
+              if (data && data.base64) {
+                // Auto populate extracted details demo
+                setRecordB((prev) => ({ ...prev, name: 'Mohammed Rafi (Zia Scanned)' }));
+              }
+            }}
+          />
         </div>
 
         {/* Big Decision Card */}

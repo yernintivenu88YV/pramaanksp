@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Search, Sparkles, Command, Bell, Plus, ChevronRight, CircleDot, Globe, Shield, LogOut, Sun, Moon } from 'lucide-react';
-import { type } from '../../design/scale';
+import { Search, Command, Bell, ChevronRight, CircleDot, Globe, Shield, LogOut, Sun, Moon, Check, Trash2, X, AlertTriangle, AlertCircle } from 'lucide-react';
 
 const titles = {
   overview: { title: 'Command Overview', sub: 'Watch floor', titleKn: 'ಕಮಾಂಡ್ ಮೇಲ್ನೋಟ' },
@@ -10,12 +9,19 @@ const titles = {
   graph: { title: 'Entity Graph', sub: 'Analyze', titleKn: 'ಸಂಬಂಧಿತ ಜಾಲಲಕ್ಷಣ Graph' },
   similar: { title: 'Case Twin Intelligence', sub: 'Investigate', titleKn: 'ಸಮಾನ ಅಪರಾಧ ಮಾದರಿಗಳು' },
   resolution: { title: 'Identity Resolution', sub: 'Investigate', titleKn: 'ಗುರುತು ದೃಢೀಕರಣ Resolution' },
+  history: { title: 'Investigation History', sub: 'Investigate', titleKn: 'ತನಿಖಾ ಇತಿಹಾಸ' },
   assistant: { title: 'AI Investigation Assistant', sub: 'Analyze', titleKn: 'ಎಐ ತನಿಖಾ ಸಹಾಯಕ' },
   audit: { title: 'Audit & Compliance', sub: 'Govern', titleKn: 'ಲೆಕ್ಕಪರಿಶೋಧನೆ ಮತ್ತು ನಿಯಮಾವಳಿ' },
   helpdesk: { title: 'Public Help Desk', sub: 'Public', titleKn: 'ಸಾರ್ವಜನಿಕ ಸಹಾಯ ಕೇಂದ್ರ' },
 };
 
 const roles = ['SI', 'ACP', 'Analyst', 'Policy'];
+
+const INITIAL_NOTIFICATIONS = [
+  { id: '1', title: 'Critical Alert: Burglary Cluster', time: '10 mins ago', unread: true, severity: 'critical', desc: 'Indiranagar reported 3 window-forced burglaries.' },
+  { id: '2', title: 'Warrant Issued: CANON-0042', time: '1 hour ago', unread: true, severity: 'warning', desc: '1st ACMM Court issued active theft warrant for Mohammed Rafi.' },
+  { id: '3', title: 'Identity Merged: AUTO_MERGE', time: '2 hours ago', unread: false, severity: 'info', desc: 'Fellegi-Sunter matched P-101 and P-102 based on phone number.' }
+];
 
 export function TopBar({
   view,
@@ -29,8 +35,11 @@ export function TopBar({
 }) {
   const meta = titles[view] || titles.overview;
   const [theme, setTheme] = useState('dark');
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
 
   const displayTitle = language === 'KN' ? meta.titleKn : meta.title;
+  const unreadCount = notifications.filter((n) => n.unread).length;
 
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
@@ -42,8 +51,16 @@ export function TopBar({
     }
   };
 
+  const markAllRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
+  };
+
+  const clearAll = () => {
+    setNotifications([]);
+  };
+
   return (
-    <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-3 border-b border-pramaan-border bg-pramaan-bg px-4 py-2">
+    <header className="flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-3 border-b border-pramaan-border bg-pramaan-bg px-4 py-2 relative z-50">
       {/* Breadcrumb & Title */}
       <div className="flex min-w-0 items-center gap-2">
         <span className="text-pramaan-text-secondary/70 uppercase text-[10px] font-semibold tracking-widest font-mono">
@@ -75,7 +92,72 @@ export function TopBar({
       </div>
 
       {/* Control Actions */}
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex items-center gap-2 relative">
+        {/* Notifications Bell */}
+        <div className="relative">
+          <button
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="relative flex h-8 w-8 items-center justify-center rounded-lg border border-pramaan-border bg-pramaan-surface text-pramaan-text-secondary hover:text-pramaan-text transition-colors cursor-pointer"
+            title="Notifications & Alerts"
+          >
+            <Bell size={15} />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-pramaan-critical text-[10px] font-mono font-bold text-white">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+
+          {/* Notifications Dropdown Drawer */}
+          {showNotifications && (
+            <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-xl border border-pramaan-border bg-pramaan-surface shadow-2xl overflow-hidden z-[100]">
+              <div className="flex items-center justify-between border-b border-pramaan-border p-3 bg-pramaan-elevated">
+                <div className="flex items-center gap-2">
+                  <Bell size={14} className="text-pramaan-primary" />
+                  <span className="font-bold text-xs text-pramaan-text">Notifications & Stream Alerts</span>
+                  {unreadCount > 0 && (
+                    <span className="px-1.5 py-0.5 rounded bg-pramaan-critical/20 text-pramaan-critical text-[10px] font-mono font-bold">
+                      {unreadCount} new
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={markAllRead} className="text-[10px] text-pramaan-primary hover:underline font-semibold" title="Mark all as read">
+                    Mark Read
+                  </button>
+                  <button onClick={clearAll} className="text-[10px] text-pramaan-critical hover:underline font-semibold" title="Clear notifications">
+                    Clear
+                  </button>
+                  <button onClick={() => setShowNotifications(false)} className="text-pramaan-text-secondary hover:text-pramaan-text ml-1">
+                    <X size={14} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="max-h-72 overflow-y-auto divide-y divide-pramaan-border p-1">
+                {notifications.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-pramaan-text-secondary">
+                    No new notifications.
+                  </div>
+                ) : (
+                  notifications.map((n) => (
+                    <div
+                      key={n.id}
+                      className={`p-3 transition-colors ${n.unread ? 'bg-pramaan-primary/10' : 'hover:bg-pramaan-elevated/40'}`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="font-semibold text-xs text-pramaan-text">{n.title}</span>
+                        <span className="text-[10px] font-mono text-pramaan-text-secondary shrink-0">{n.time}</span>
+                      </div>
+                      <p className="text-[11px] text-pramaan-text-secondary mt-1 leading-snug">{n.desc}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Bilingual Language Switcher */}
         <button
           onClick={onLanguageToggle}
