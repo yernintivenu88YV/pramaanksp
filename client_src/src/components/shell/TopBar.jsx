@@ -110,46 +110,83 @@ export function TopBar({
 
           {/* Notifications Dropdown Drawer */}
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-xl border border-pramaan-border bg-pramaan-surface shadow-2xl overflow-hidden z-[100]">
-              <div className="flex items-center justify-between border-b border-pramaan-border p-3 bg-pramaan-elevated">
-                <div className="flex items-center gap-2">
-                  <Bell size={14} className="text-pramaan-primary" />
-                  <span className="font-bold text-xs text-pramaan-text">Notifications & Stream Alerts</span>
-                  {unreadCount > 0 && (
-                    <span className="px-1.5 py-0.5 rounded bg-pramaan-critical/20 text-pramaan-critical text-[10px] font-mono font-bold">
-                      {unreadCount} new
-                    </span>
-                  )}
+            <div className="absolute right-0 top-full mt-2 w-84 sm:w-[420px] max-w-[92vw] rounded-2xl border border-pramaan-border bg-pramaan-surface shadow-2xl overflow-hidden z-[2500]">
+              {/* Header Header Bar */}
+              <div className="border-b border-pramaan-border p-3.5 bg-pramaan-elevated/90 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-pramaan-primary/20 text-pramaan-primary">
+                      <Bell size={13} />
+                    </div>
+                    <span className="font-bold text-xs text-pramaan-text font-sans">Notifications & Stream Alerts</span>
+                    {unreadCount > 0 && (
+                      <span className="px-2 py-0.5 rounded-full bg-pramaan-critical text-white text-[10px] font-mono font-bold">
+                        {unreadCount} new
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setShowNotifications(false)}
+                    className="p-1 rounded-md text-pramaan-text-secondary hover:text-pramaan-text hover:bg-pramaan-surface transition-colors cursor-pointer"
+                  >
+                    <X size={15} />
+                  </button>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={markAllRead} className="text-[10px] text-pramaan-primary hover:underline font-semibold" title="Mark all as read">
-                    Mark Read
-                  </button>
-                  <button onClick={clearAll} className="text-[10px] text-pramaan-critical hover:underline font-semibold" title="Clear notifications">
-                    Clear
-                  </button>
-                  <button onClick={() => setShowNotifications(false)} className="text-pramaan-text-secondary hover:text-pramaan-text ml-1">
-                    <X size={14} />
-                  </button>
+
+                {/* Sub Action Controls Bar */}
+                <div className="flex items-center justify-between text-[11px] font-mono pt-1">
+                  <span className="text-pramaan-text-secondary">
+                    {notifications.length} Total Crime Stream Events
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={markAllRead}
+                      className="text-pramaan-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+                    >
+                      <Check size={12} /> Mark Read
+                    </button>
+                    <span className="text-pramaan-border">|</span>
+                    <button
+                      onClick={clearAll}
+                      className="text-pramaan-critical hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+                    >
+                      <Trash2 size={12} /> Clear All
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <div className="max-h-72 overflow-y-auto divide-y divide-pramaan-border p-1">
+              {/* Scrollable Alerts Stream List */}
+              <div className="max-h-80 overflow-y-auto divide-y divide-pramaan-border/60 p-1.5">
                 {notifications.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-pramaan-text-secondary">
-                    No new notifications.
+                  <div className="p-8 text-center text-xs text-pramaan-text-secondary space-y-1">
+                    <Check size={20} className="mx-auto text-pramaan-success" />
+                    <p className="font-semibold text-pramaan-text">All alerts cleared</p>
+                    <p className="text-[11px] text-pramaan-text-secondary">No active threat alerts in stream</p>
                   </div>
                 ) : (
                   notifications.map((n) => (
                     <div
                       key={n.id}
-                      className={`p-3 transition-colors ${n.unread ? 'bg-pramaan-primary/10' : 'hover:bg-pramaan-elevated/40'}`}
+                      className={`p-3 rounded-xl transition-all ${
+                        n.unread
+                          ? 'bg-pramaan-primary/10 border border-pramaan-primary/20'
+                          : 'hover:bg-pramaan-elevated/60'
+                      }`}
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <span className="font-semibold text-xs text-pramaan-text">{n.title}</span>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`h-2 w-2 rounded-full shrink-0 ${
+                              n.severity === 'critical' ? 'bg-pramaan-critical animate-pulse' :
+                              n.severity === 'warning' ? 'bg-pramaan-warning' : 'bg-pramaan-primary'
+                            }`}
+                          />
+                          <span className="font-bold text-xs text-pramaan-text leading-tight">{n.title}</span>
+                        </div>
                         <span className="text-[10px] font-mono text-pramaan-text-secondary shrink-0">{n.time}</span>
                       </div>
-                      <p className="text-[11px] text-pramaan-text-secondary mt-1 leading-snug">{n.desc}</p>
+                      <p className="text-[11px] text-pramaan-text-secondary mt-1.5 leading-relaxed pl-4 font-sans">{n.desc}</p>
                     </div>
                   ))
                 )}
