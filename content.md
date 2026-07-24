@@ -150,6 +150,12 @@ The Pramaan backend is built as a unified, high-performance containerized **Fast
 * **View Suite & Interactive Geo-Tracking**: Implemented 8 fully responsive views (`OverviewView`, `CasesView`, `AlertsView`, `EntityGraphView`, `SimilarCasesView`, `ResolutionView`, `AssistantView`, `AuditView`) and integrated a fully interactive **Live Map View** (`LiveMapView` and `HotspotMap`). The Live Map parses clustered spatial hotspots, density indices, coordinates, and case listings directly from the backend `/server/graph_fn/hotspots` API.
 * **Slate Hosting Configuration**: Connected deployment pipelines, defined `"client": {"source": "client"}` mapping in `catalyst.json`, set SPA 404 fallback routing in `client-package.json`, and synced production bundles directly to root/subpath directories for automatic Zoho Catalyst Slate deployment.
 
+### Phase 6: Dynamic Dashboards, Solution Alignment Matrix, & TLS Deployment Diagnostics
+* **Live Priority Leaderboard**: Connected `OverviewView.jsx` to the actual `/server/graph_fn/priority` endpoint. Integrated interactive weight sliders and explainability tooltips, rendering live suspect threat calculations dynamically on the main dashboard.
+* **Datathon Solution Evaluation**: Overhauled `README.md` to map the KSP problem statement to concrete implementation architectures across a 10-point Solution Alignment matrix (voice interfaces, graph communities, spatial hotspots, and secure RBAC).
+* **TLS Deployment & Routing Fixes**: Resolved internal API call failures resulting from TLS terminations at the upstream AppSail gateway proxy. Implemented custom `_self_base_url` resolution to preserve scheme protocols.
+* **Dynamic Catalyst SDK Binding**: Moved database and SDK initialization from static startup hooks to request-level middleware, ensuring credentials injected during HTTP calls are preserved.
+
 ---
 
 ## 5. Issues & Technical Problems Faced and Implemented Solutions
@@ -166,6 +172,8 @@ The Pramaan backend is built as a unified, high-performance containerized **Fast
 | 8 | **Supreme Court Aadhaar Compliance** | Legal ban on using Aadhaar as matching identifier in entity resolution. | Standardized resolution strictly on non-Aadhaar keys (Phone, VRN, DL, Voter ID). |
 | 9 | **Unstyled Frontend After Build** | Missing `import './index.css'` in the main entrypoint (`main.jsx`). Tailwind CSS was never loaded or extracted by Vite. | Added index.css import to main.jsx, successfully compiling the full 44KB styled design sheet. |
 | 10| **Slate Deployment 404 on Subpaths** | Slate served root files but lacked mapping for frontend folder in catalyst.json, routing rules for subpaths (like `/app/index.html`), and SPA fallback. | Added client mapping to catalyst.json, generated direct `/app/index.html` static redirect targets, and configured SPA 404 rewrite fallback in client-package.json. |
+| 11| **Deployed TLS Proxy Scheme Mismatch** | AppSail proxy terminates TLS, causing internal POST requests to report `400 Bad Request` if routed to the internal HTTP schema. | Implemented custom `_self_base_url` utility honoring `X-Forwarded-Proto` request headers. |
+| 12| **Per-Request SDK Authentication Failures** | Zoho Catalyst authentication headers are dynamically injected per-request, causing global startup DB calls to fail. | Moved the database repository check to the request middleware layer, enabling correct per-request verification. |
 
 ---
 
