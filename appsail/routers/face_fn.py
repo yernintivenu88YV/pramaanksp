@@ -7,7 +7,6 @@ from fastapi import APIRouter, Request, File, UploadFile, Form, HTTPException, s
 from pydantic import BaseModel
 
 from utils.llm_client import generate_response
-from deepface import DeepFace
 
 logger = logging.getLogger("appsail.face_fn")
 router = APIRouter(prefix="/server/face_fn")
@@ -19,6 +18,7 @@ MODEL_NAME = "Facenet"
 
 def get_embedding(img_path: str):
     try:
+        from deepface import DeepFace
         objs = DeepFace.represent(img_path=img_path, model_name=MODEL_NAME, enforce_detection=True)
         if not objs or len(objs) == 0:
             return None
