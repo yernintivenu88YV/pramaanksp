@@ -89,6 +89,16 @@ function getSeedFallback(endpoint, bodyData) {
     };
   }
 
+  if (endpoint.includes('/rag/query') || endpoint.includes('/rag/search')) {
+    return {
+      mode: 'seed_fallback',
+      intent: 'HYBRID-RAG-SEARCH',
+      engine: 'Pramaan Local Vector RAG Engine',
+      response: 'Pramaan Local RAG signature matching identified similar burglary patterns for CASE-001. Top matched twin: CASE-002 (Koramangala Burglary, 82.1% MO Similarity score).\n\nKey Findings:\n1. Modus Operandi matches rear window forced entry using crowbar between 01:00 and 04:00 AM.\n2. Suspect ID CANON-0042 (Mohammed Rafi) is associated with both incidents.\n3. Active warrant WAR-2026-001 issued by 1st ACMM Court.',
+      citations: ['FIR-2024-8841', 'FIR-2024-8842']
+    };
+  }
+
   return { mode: 'seed_fallback', status: 'ok' };
 }
 
