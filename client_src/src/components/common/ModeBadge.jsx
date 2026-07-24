@@ -1,24 +1,30 @@
 import React from 'react';
 
 /**
- * ModeBadge: Transparent indicator showing whether data is live from ZCQL,
- * from seed_fallback mode, or running in local mock mode.
+ * ModeBadge: Pill with pulsing dot — LIVE ZCQL (green) / SEED FALLBACK (amber) / MOCK (cyan).
+ * Ensures data provenance and honesty as per UI_DESIGN.md section 2.4.
  */
 export function ModeBadge({ mode }) {
   let label = 'LIVE ZCQL';
-  let colorClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+  let badgeStyle = 'bg-pramaan-success/15 text-pramaan-success border-pramaan-success/30';
+  let dotStyle = 'bg-pramaan-success';
 
   if (mode === 'seed_fallback' || mode === 'fallback') {
     label = 'SEED FALLBACK';
-    colorClass = 'bg-amber-500/10 text-amber-400 border-amber-500/30';
+    badgeStyle = 'bg-pramaan-warning/15 text-pramaan-warning border-pramaan-warning/30';
+    dotStyle = 'bg-pramaan-warning';
   } else if (mode === 'mock' || mode === 'mock_error') {
     label = 'MOCK MODE';
-    colorClass = 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30';
+    badgeStyle = 'bg-pramaan-secondary/15 text-pramaan-secondary border-pramaan-secondary/30';
+    dotStyle = 'bg-pramaan-secondary';
   }
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded border text-[10px] font-mono tracking-wider font-semibold ${colorClass}`}>
-      <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span>
+    <span
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-mono tracking-wider font-semibold uppercase ${badgeStyle}`}
+      title={`Data Source Mode: ${label}`}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full ${dotStyle} dot-pulse`}></span>
       {label}
     </span>
   );

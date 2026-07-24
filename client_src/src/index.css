@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+Kannada:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
 @custom-variant dark (&:is(.dark *));
@@ -6,205 +6,116 @@
 :root {
   --font-size: 13px;
 
-  /* Pramaan palette - near-black intelligence terminal, neutral-first */
-  --pramaan-bg: #0B0D10;
-  --pramaan-surface: #14171C;
-  --pramaan-elevated: #1B1F26;
-  --pramaan-panel: #1B1F26;
-  --pramaan-hover: #1B1F26;
-  --pramaan-border: rgba(255, 255, 255, 0.08);
-  --pramaan-border-strong: rgba(255, 255, 255, 0.12);
-  --pramaan-primary: #4A9EFF;
-  --pramaan-secondary: #7DB8FF;
-  --pramaan-signal: #FFB84D;
-  --pramaan-success: #5FA37E;
-  --pramaan-warning: #FFB84D;
-  --pramaan-critical: #E5675C;
-  --pramaan-text: #E8EAED;
-  --pramaan-text-secondary: #9AA0A6;
+  /* Pramaan Palette — Midnight Command */
+  --pramaan-bg: #0B0E14;
+  --pramaan-surface: #121722;
+  --pramaan-elevated: #1A2130;
+  --pramaan-panel: #232C3D;
+  --pramaan-border: #2A3346;
+  --pramaan-border-strong: #3A455C;
+  --pramaan-primary: #3B82F6;
+  --pramaan-secondary: #38BDF8;
+  --pramaan-signal: #22D3EE;
+  --pramaan-success: #34D399;
+  --pramaan-warning: #FBBF24;
+  --pramaan-critical: #F87171;
+  --pramaan-info: #A78BFA;
+  --pramaan-text: #EAF0FA;
+  --pramaan-text-secondary: #8A97AD;
 
-  --background: #0B0D10;
-  --foreground: #E8EAED;
-  --card: #14171C;
-  --card-foreground: #E8EAED;
-  --popover: #1B1F26;
-  --popover-foreground: #E8EAED;
-  --primary: #4A9EFF;
-  --primary-foreground: #0B0D10;
-  --secondary: #1B1F26;
-  --secondary-foreground: #E8EAED;
-  --muted: #14171C;
-  --muted-foreground: #9AA0A6;
-  --accent: #1B1F26;
-  --accent-foreground: #E8EAED;
-  --destructive: #E5675C;
-  --destructive-foreground: #0B0D10;
-  --border: #23272E;
-  --input: #23272E;
-  --input-background: #14171C;
-  --switch-background: #23272E;
-  --font-weight-medium: 500;
-  --font-weight-normal: 400;
-  --ring: #4A9EFF;
-  --chart-1: #4A9EFF;
-  --chart-2: #7DB8FF;
-  --chart-3: #5FA37E;
-  --chart-4: #FFB84D;
-  --chart-5: #9AA0A6;
-  --radius: 0.5rem;
-  --sidebar: #0B0D10;
-  --sidebar-foreground: #9AA0A6;
-  --sidebar-primary: #4A9EFF;
-  --sidebar-primary-foreground: #0B0D10;
-  --sidebar-accent: #1B1F26;
-  --sidebar-accent-foreground: #E8EAED;
-  --sidebar-border: #23272E;
-  --sidebar-ring: #4A9EFF;
+  --background: #0B0E14;
+  --foreground: #EAF0FA;
+  --card: #121722;
+  --card-foreground: #EAF0FA;
+  --popover: #1A2130;
+  --popover-foreground: #EAF0FA;
+  --primary: #3B82F6;
+  --primary-foreground: #0B0E14;
+  --secondary: #22D3EE;
+  --secondary-foreground: #0B0E14;
+  --muted: #121722;
+  --muted-foreground: #8A97AD;
+  --accent: #1A2130;
+  --accent-foreground: #EAF0FA;
+  --destructive: #F87171;
+  --destructive-foreground: #0B0E14;
+  --border: #2A3346;
+  --input: #2A3346;
+  --input-background: #121722;
+  --switch-background: #2A3346;
+  --radius: 0.625rem;
+  --sidebar: #0B0E14;
+  --sidebar-foreground: #8A97AD;
+  --sidebar-primary: #3B82F6;
+  --sidebar-primary-foreground: #0B0E14;
+  --sidebar-accent: #1A2130;
+  --sidebar-accent-foreground: #EAF0FA;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-input-background: var(--input-background);
-  --color-switch-background: var(--switch-background);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-pramaan-bg: var(--pramaan-bg);
-  --color-pramaan-surface: var(--pramaan-surface);
-  --color-pramaan-elevated: var(--pramaan-elevated);
-  --color-pramaan-panel: var(--pramaan-panel);
-  --color-pramaan-hover: var(--pramaan-hover);
-  --color-pramaan-border: var(--pramaan-border);
-  --color-pramaan-border-strong: var(--pramaan-border-strong);
-  --color-pramaan-signal: var(--pramaan-signal);
-  --color-pramaan-primary: var(--pramaan-primary);
-  --color-pramaan-secondary: var(--pramaan-secondary);
-  --color-pramaan-success: var(--pramaan-success);
-  --color-pramaan-warning: var(--pramaan-warning);
-  --color-pramaan-critical: var(--pramaan-critical);
-  --color-pramaan-text: var(--pramaan-text);
-  --color-pramaan-text-secondary: var(--pramaan-text-secondary);
-  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+/* Daytime Station Light Mode Palette */
+:root.light {
+  --pramaan-bg: #F6F8FB;
+  --pramaan-surface: #FFFFFF;
+  --pramaan-elevated: #EDF1F7;
+  --pramaan-panel: #E2E8F0;
+  --pramaan-border: #CBD5E1;
+  --pramaan-border-strong: #94A3B8;
+  --pramaan-primary: #0F2A4A;
+  --pramaan-secondary: #0284C7;
+  --pramaan-text: #0F172A;
+  --pramaan-text-secondary: #475569;
+
+  --background: #F6F8FB;
+  --foreground: #0F172A;
+  --card: #FFFFFF;
+  --card-foreground: #0F172A;
+  --popover: #EDF1F7;
+  --popover-foreground: #0F172A;
+  --primary: #0F2A4A;
+  --border: #CBD5E1;
+  --sidebar: #F6F8FB;
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-
-  body {
-    @apply bg-background text-foreground;
-    font-family: var(--font-sans);
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-  }
-
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: var(--pramaan-border) transparent;
-  }
-  *::-webkit-scrollbar { width: 8px; height: 8px; }
-  *::-webkit-scrollbar-thumb { background: var(--pramaan-border); border-radius: 4px; }
-  *::-webkit-scrollbar-thumb:hover { background: var(--pramaan-border-strong); }
-  *::-webkit-scrollbar-corner { background: transparent; }
-
-  .tnum { font-variant-numeric: tabular-nums; }
-  .font-kannada { font-family: 'Noto Sans Kannada', var(--font-sans); }
-
-  ::selection { background: rgba(63, 125, 247, 0.28); }
-
-  html { font-size: var(--font-size); }
-  h1 { font-size: var(--text-2xl); font-weight: var(--font-weight-medium); line-height: 1.5; }
-  h2 { font-size: var(--text-xl); font-weight: var(--font-weight-medium); line-height: 1.5; }
-  h3 { font-size: var(--text-lg); font-weight: var(--font-weight-medium); line-height: 1.5; }
-  h4 { font-size: var(--text-base); font-weight: var(--font-weight-medium); line-height: 1.5; }
-  label { font-size: var(--text-base); font-weight: var(--font-weight-medium); line-height: 1.5; }
-  button { font-size: var(--text-base); font-weight: var(--font-weight-medium); line-height: 1.5; }
-  input { font-size: var(--text-base); font-weight: var(--font-weight-normal); line-height: 1.5; }
+body {
+  background-color: var(--pramaan-bg);
+  color: var(--pramaan-text);
+  font-family: 'Inter', 'Noto Sans Kannada', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: var(--font-size);
+  line-height: 1.5;
+  letter-spacing: -0.01em;
 }
 
-@layer utilities {
-  @keyframes pramaan-panel-in {
-    from { opacity: 0; transform: translateX(8px); }
-    to   { opacity: 1; transform: translateX(0); }
-  }
-  @keyframes pramaan-panel-in-left {
-    from { opacity: 0; transform: translateX(-8px); }
-    to   { opacity: 1; transform: translateX(0); }
-  }
-  @keyframes pramaan-fade-in {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
-  @keyframes pramaan-shimmer {
-    0%   { opacity: 0.45; }
-    50%  { opacity: 0.85; }
-    100% { opacity: 0.45; }
-  }
-  @keyframes pramaan-dot-pulse {
-    0%, 100% { opacity: 0.25; }
-    50%      { opacity: 1; }
-  }
-  @keyframes pramaan-dash {
-    to { stroke-dashoffset: -24; }
-  }
-
-  .anim-panel      { animation: pramaan-panel-in 200ms ease-out; }
-  .anim-panel-left { animation: pramaan-panel-in-left 200ms ease-out; }
-  .anim-content    { animation: pramaan-fade-in 150ms ease-out; }
-  .skeleton {
-    background: var(--pramaan-elevated);
-    animation: pramaan-shimmer 1.5s ease-in-out infinite;
-  }
-  .thinking-dot { animation: pramaan-dot-pulse 1.5s ease-in-out infinite; }
-  .thinking-dot:nth-child(2) { animation-delay: 0.25s; }
-  .thinking-dot:nth-child(3) { animation-delay: 0.5s; }
-
-  @media (prefers-reduced-motion: reduce) {
-    .anim-panel, .anim-panel-left, .anim-content,
-    .skeleton, .thinking-dot { animation: none; }
-  }
+/* Tabular Figures for Numbers & IDs */
+.font-mono, td, .tnum {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
 }
 
-/* Leaflet dark overrides */
-.leaflet-container { background: #0B0D10; font-family: var(--font-mono); }
-.leaflet-control-attribution { background: rgba(11,13,16,0.7) !important; color: #9AA0A6 !important; font-size: 8px !important; }
-.leaflet-control-attribution a { color: #9AA0A6 !important; }
-.leaflet-bar, .leaflet-bar a { background: #14171C !important; color: #9AA0A6 !important; border-color: rgba(255,255,255,0.08) !important; }
-.leaflet-bar a:hover { background: #1B1F26 !important; color: #E8EAED !important; }
-.trail-dash { stroke-dasharray: 6 6; animation: pramaan-dash 1s linear infinite; }
-.pramaan-marker { background: transparent; border: none; }
+/* Kannada Typography */
+.font-kannada {
+  font-family: 'Noto Sans Kannada', sans-serif;
+}
 
+/* Crime Type Semantic Color Utilities */
+.crime-burglary { color: #F59E0B; border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.1); }
+.crime-chain-snatching { color: #EF4444; border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.1); }
+.crime-vehicle-theft { color: #A855F7; border-color: rgba(168, 85, 247, 0.4); background: rgba(168, 85, 247, 0.1); }
+.crime-theft { color: #F97316; border-color: rgba(249, 115, 22, 0.4); background: rgba(249, 115, 22, 0.1); }
+.crime-assault { color: #EC4899; border-color: rgba(236, 72, 153, 0.4); background: rgba(236, 72, 153, 0.1); }
+.crime-murder { color: #DC2626; border-color: rgba(220, 38, 38, 0.4); background: rgba(220, 38, 38, 0.1); }
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--pramaan-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--pramaan-panel);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--pramaan-border-strong);
+}

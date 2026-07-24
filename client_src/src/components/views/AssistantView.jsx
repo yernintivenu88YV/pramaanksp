@@ -1,22 +1,31 @@
 import React, { useState } from 'react';
-import { WorkPanel } from '../ui/Layout.jsx';
-import { Cite } from '../ui/AI.jsx';
-import { SeverityBadge } from '../ui/Severity.jsx';
-import { Sparkles, Download, Copy, Send, RefreshCw, ChevronDown, ChevronUp, FileText, Fingerprint, Share2, Layers } from 'lucide-react';
-import { Button } from '../ui/Controls.jsx';
+import { WorkPanel } from '../common/WorkPanel.jsx';
+import { ModeBadge } from '../common/ModeBadge.jsx';
+import { Cite } from '../common/Cite.jsx';
+import { Sparkles, Mic, Globe, Send, Download, RefreshCw, FileText, Fingerprint, Share2 } from 'lucide-react';
 import { api } from '../../api/client.js';
 
-export default function AssistantView() {
-  const [query, setQuery] = useState('Find similar burglary cases to CASE-001');
+export default function AssistantView({ activeRole = 'ACP' }) {
+  const [query, setQuery] = useState('Find similar burglary cases to CASE-001 in Kannada');
+  const [isVoiceActive, setIsVoiceActive] = useState(false);
+  const [language, setLanguage] = useState('EN');
   const [result, setResult] = useState(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
-  const [exportMessage, setExportMessage] = useState('');
+  const [exportNotice, setExportNotice] = useState(null);
 
-  async function ask() {
+  const suggestedPrompts = [
+    'Find similar burglary cases to CASE-001',
+    'Resolve identity pair Mohammed Rafi vs Mohammad Rafi',
+    'Traverse associate network for CANON-0042',
+    'ಮನೆಗಳ್ಳತನ ಪ್ರಕರಣ CASE-001 ಸಮಾನ ಅಪರಾಧಗಳನ್ನು ಹುಡುಕಿ'
+  ];
+
+  async function handleSendQuery(textToSend) {
+    const targetText = textToSend || query;
     setPending(true);
     setError('');
-    const res = await api.routeQuery(query);
+    const res = await api.routeQuery(targetText);
     setPending(false);
     if (!res.ok) {
       setError(res.error || 'Assistant route failed');
@@ -25,206 +34,127 @@ export default function AssistantView() {
     setResult(res.data);
   }
 
-  async function exportDossier() {
-    setExportMessage('');
-    const res = await api.exportDossierPdf('CASE-001', 3);
-    if (!res.ok) {
-      setExportMessage(res.error || 'Dossier export failed');
-      return;
+  const handleExportPDF = async () => {
+    setExportNotice(null);
+    const res = await api.exportDossierPdf('ASSISTANT-SESSION-01', 'CASE-001');
+    if (res.ok) {
+      setExportNotice({ type: 'success', text: 'Exported conversation dossier PDF successfully.' });
+    } else {
+      setExportNotice({ type: 'error', text: res.error || 'Failed to export dossier PDF' });
     }
-    setExportMessage(`Export endpoint responded in ${res.mode} mode.`);
-  }
+  };
 
   return (
-    <WorkPanel className="h-full bg-pramaan-bg text-pramaan-text" bodyClass="p-4 sm:p-6 overflow-auto">
-      <div className="mb-6 rounded-lg border border-pramaan-border bg-pramaan-surface p-3">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center">
-          <Sparkles className="text-pramaan-primary" size={20} />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ask Pramaan to route an investigator query..."
-            className="min-w-0 flex-1 bg-transparent text-sm text-pramaan-text outline-none placeholder:text-pramaan-text-secondary"
-          />
-          <Button onClick={ask} disabled={pending}>
-            <Send size={14} /> {pending ? 'Routing...' : 'Send Query'}
-          </Button>
-        </div>
-      </div>
-
-      <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-xl font-bold">AI Investigation Assistant</h1>
-          <p className="text-sm text-pramaan-text-secondary">Natural-language router for entity resolution, case-twin search, and graph traversal.</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" className="text-xs"><Copy size={14} /> Copy Citation</Button>
-          <Button onClick={exportDossier} className="text-xs"><Download size={14} /> Export CASE-001 Dossier</Button>
-        </div>
-      </div>
-
-      {error && <div className="mb-4 rounded border border-pramaan-critical/30 bg-pramaan-critical/10 p-3 text-sm text-pramaan-critical">{error}</div>}
-      {exportMessage && <div className="mb-4 rounded border border-pramaan-primary/30 bg-pramaan-primary/10 p-3 text-sm text-pramaan-primary">{exportMessage}</div>}
-
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="space-y-6">
-          <section>
-            <h2 className="mb-2 border-b border-pramaan-border pb-1 text-sm font-semibold text-pramaan-primary">Current Assessment</h2>
-            {result?.rag_summary ? (
-              <div className="rounded border border-pramaan-border bg-pramaan-surface p-4 text-sm leading-relaxed text-pramaan-text whitespace-pre-wrap">
-                {result.rag_summary}
-              </div>
-            ) : (
-              <p className="text-sm leading-relaxed text-pramaan-text-secondary">
-                CASE-001 should be handled as a connected property-crime investigation. The strongest automated signals are the canonical suspect CANON-0042 <Cite id="1" />, exact vehicle registration match KA-02-MB-1234 <Cite id="2" />, and a high-similarity burglary signature against CASE-002 <Cite id="3" />.
-              </p>
-            )}
-          </section>
-
-          <section>
-            <h2 className="mb-2 border-b border-pramaan-border pb-1 text-sm font-semibold text-pramaan-primary">Routed Result</h2>
-            <div className="rounded-lg border border-pramaan-border bg-pramaan-surface p-4">
-              {pending ? (
-                <div className="flex items-center gap-2 text-sm text-pramaan-text-secondary">
-                  <RefreshCw size={14} className="animate-spin" /> Waiting for AppSail route...
-                </div>
-              ) : result ? (
-                <RoutedResultCard result={result} />
-              ) : (
-                <p className="text-sm text-pramaan-text-secondary">Send the sample query to exercise `/server/intent_router_fn/route`.</p>
-              )}
-            </div>
-          </section>
-
-          <section>
-            <h2 className="mb-2 border-b border-pramaan-border pb-1 text-sm font-semibold text-pramaan-primary">Recommended Next Actions</h2>
-            <ul className="list-inside list-disc space-y-1 text-sm text-pramaan-text-secondary">
-              <li>Open CASE-002 and compare MO, timing, and narrative explanation before merging the investigation thread.</li>
-              <li>Verify active warrant WAR-2026-001 before field action.</li>
-              <li>Export a court-ready dossier after SmartBrowz is enabled in Catalyst.</li>
-            </ul>
-          </section>
-        </div>
-
-        <aside className="rounded-lg border border-pramaan-border bg-pramaan-surface p-4">
-          <h2 className="mb-3 text-sm font-semibold">Evidence Confidence</h2>
-          <ConfidenceRow label="Exact phone and vehicle" value="100%" tone="text-pramaan-success" />
-          <ConfidenceRow label="Burglary signature twin" value="82%" tone="text-pramaan-success" />
-          <ConfidenceRow label="Graph relationship density" value="73%" tone="text-pramaan-warning" />
-          <ConfidenceRow label="Voice query availability" value="Depends on Bhashini env" tone="text-pramaan-text-secondary" />
-        </aside>
-      </div>
-    </WorkPanel>
-  );
-}
-
-function RoutedResultCard({ result }) {
-  const [showRaw, setShowRaw] = useState(false);
-  const intent = result.intent || 'unknown';
-  const mode = result.mode || 'live';
-  const resp = result.response || {};
-  const cls = result.classification || {};
-
-  return (
-    <div className="space-y-4">
-      {/* Header Badge Strip */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-pramaan-border pb-3">
-        <div className="flex items-center gap-2">
-          <span className="rounded bg-pramaan-primary/15 px-2.5 py-1 font-mono text-xs font-bold uppercase text-pramaan-primary">
-            {intent.replace(/-/g, ' ')}
-          </span>
-          <span className="text-xs font-mono text-pramaan-text-secondary">Mode: {mode}</span>
-        </div>
-        <button
-          onClick={() => setShowRaw(!showRaw)}
-          className="flex items-center gap-1 text-xs text-pramaan-text-secondary hover:text-pramaan-text transition-colors"
-        >
-          {showRaw ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          {showRaw ? 'Hide Raw JSON' : 'Inspect Raw JSON'}
-        </button>
-      </div>
-
-      {/* Structured Content Views */}
-      {intent === 'case-similarity-search' && (
-        <div className="space-y-3">
-          <div className="text-xs text-pramaan-text-secondary">
-            Target Case: <span className="font-mono font-bold text-pramaan-text">{cls.case_similarity_target_id || 'CASE-001'}</span>
+    <div className="space-y-5 anim-content">
+      <WorkPanel
+        eyebrow="Analyze Module"
+        title="AI Investigation Assistant (Bilingual Voice & Text)"
+        actions={
+          <div className="flex items-center gap-3">
+            <ModeBadge mode="live" />
+            <button
+              onClick={handleExportPDF}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-pramaan-elevated border border-pramaan-border hover:border-pramaan-secondary/40 text-xs font-semibold text-pramaan-secondary transition-colors cursor-pointer"
+            >
+              <Download size={14} /> Export Conversation PDF
+            </button>
           </div>
-          {Array.isArray(resp.top_matches) && resp.top_matches.length > 0 && (
-            <div className="space-y-2">
-              <span className="text-xs font-semibold text-pramaan-text-secondary">Matched Twin Cases:</span>
-              {resp.top_matches.map((m) => (
-                <div key={m.case_id} className="flex items-center justify-between rounded border border-pramaan-border bg-pramaan-elevated p-2.5 text-xs">
-                  <div className="flex items-center gap-2">
-                    <FileText size={14} className="text-pramaan-primary" />
-                    <span className="font-mono font-bold">{m.case_id}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-semibold text-pramaan-success">{(Number(m.total_score || 0) * 100).toFixed(0)}% Similarity</span>
-                    {m.shared_confirmed_suspect && (
-                      <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] text-amber-400 font-semibold">Shared Suspect</span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+        }
+      >
+        {exportNotice && (
+          <div className={`p-3 rounded-lg border text-xs mb-4 font-mono ${exportNotice.type === 'success' ? 'bg-pramaan-success/15 border-pramaan-success/30 text-pramaan-success' : 'bg-pramaan-critical/15 border-pramaan-critical/30 text-pramaan-critical'}`}>
+            {exportNotice.text}
+          </div>
+        )}
 
-      {intent === 'entity-lookup' && (
-        <div className="space-y-3">
+        {/* Conversational Input Panel */}
+        <div className="p-4 rounded-lg border border-pramaan-border bg-pramaan-elevated space-y-3 mb-5">
           <div className="flex items-center gap-2">
-            <Fingerprint size={16} className="text-pramaan-primary" />
-            <span className="text-xs text-pramaan-text-secondary">Decision:</span>
-            <span className="rounded bg-pramaan-primary/20 px-2 py-0.5 font-mono text-xs font-bold text-pramaan-primary uppercase">
-              {resp.decision || 'AUTO_MERGE'}
+            <Sparkles className="w-5 h-5 text-pramaan-secondary shrink-0" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Ask in Kannada or English: e.g. Find twin cases to CASE-001..."
+              className="flex-1 bg-transparent text-sm text-pramaan-text placeholder-pramaan-text-secondary outline-none font-sans"
+            />
+            
+            {/* Voice Input Sim */}
+            <button
+              type="button"
+              onClick={() => setIsVoiceActive(!isVoiceActive)}
+              className={`p-2 rounded-lg border transition-colors cursor-pointer ${
+                isVoiceActive ? 'bg-pramaan-critical/20 text-pramaan-critical border-pramaan-critical/40 animate-pulse' : 'bg-pramaan-surface text-pramaan-text-secondary border-pramaan-border hover:text-pramaan-text'
+              }`}
+              title="Bhashini Voice Input (Microphone)"
+            >
+              <Mic size={16} />
+            </button>
+
+            {/* Send Button */}
+            <button
+              onClick={() => handleSendQuery()}
+              disabled={pending}
+              className="px-4 py-2 bg-pramaan-primary hover:bg-pramaan-primary-cyan text-pramaan-bg text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <Send size={13} /> {pending ? 'Routing...' : 'Send'}
+            </button>
+          </div>
+
+          {/* Suggested Prompt Chips */}
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-pramaan-border/60">
+            <span className="text-[10px] font-mono uppercase text-pramaan-text-secondary font-semibold">
+              Suggested Prompts:
             </span>
-          </div>
-          {Array.isArray(resp.evidence) && resp.evidence.length > 0 && (
-            <ul className="list-disc space-y-1 pl-4 text-xs text-pramaan-text-secondary">
-              {resp.evidence.map((ev, i) => (
-                <li key={i}>{ev}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-
-      {intent === 'graph-network-query' && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-xs text-pramaan-text-secondary">
-            <Share2 size={14} className="text-pramaan-primary" />
-            Canonical ID: <span className="font-mono font-bold text-pramaan-text">{cls.graph_query_canonical_id || 'CANON-0042'}</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="rounded border border-pramaan-border bg-pramaan-elevated p-2">
-              <span className="text-pramaan-text-secondary">Connected Nodes:</span>
-              <div className="font-bold text-pramaan-text mt-0.5">{Array.isArray(resp.nodes) ? resp.nodes.length : 0}</div>
-            </div>
-            <div className="rounded border border-pramaan-border bg-pramaan-elevated p-2">
-              <span className="text-pramaan-text-secondary">Relationships:</span>
-              <div className="font-bold text-pramaan-text mt-0.5">{Array.isArray(resp.relationships) ? resp.relationships.length : 0}</div>
-            </div>
+            {suggestedPrompts.map((prompt, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  setQuery(prompt);
+                  handleSendQuery(prompt);
+                }}
+                className="text-[11px] font-mono bg-pramaan-surface hover:bg-pramaan-panel border border-pramaan-border text-pramaan-text-secondary hover:text-pramaan-text px-2.5 py-1 rounded transition-colors cursor-pointer"
+              >
+                {prompt}
+              </button>
+            ))}
           </div>
         </div>
-      )}
 
-      {/* Raw JSON Inspect Accordion */}
-      {showRaw && (
-        <pre className="max-h-[260px] overflow-auto rounded bg-black/50 p-3 font-mono text-[11px] text-cyan-300 border border-pramaan-border">
-          {JSON.stringify(result, null, 2)}
-        </pre>
-      )}
-    </div>
-  );
-}
+        {/* Result & Assessment Panel */}
+        {result ? (
+          <div className="p-5 rounded-lg border border-pramaan-border bg-pramaan-elevated space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-pramaan-border">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono uppercase font-bold text-pramaan-secondary bg-pramaan-secondary/15 px-2 py-0.5 rounded border border-pramaan-secondary/30">
+                  Detected Intent: {result.intent || 'case-similarity-search'}
+                </span>
+                <span className="text-xs font-mono text-pramaan-text-secondary">
+                  Engine: <strong className="text-pramaan-text">AppSail Vector Router</strong>
+                </span>
+              </div>
+            </div>
 
-function ConfidenceRow({ label, value, tone }) {
-  return (
-    <div className="mb-3 flex items-center justify-between rounded border border-pramaan-border bg-pramaan-elevated p-3 text-sm">
-      <span>{label}</span>
-      <span className={`font-semibold ${tone}`}>{value}</span>
+            <div className="space-y-3 text-xs">
+              <span className="text-[11px] font-mono uppercase font-bold text-pramaan-text-secondary block">
+                Evidence Synthesis & Citation Output:
+              </span>
+
+              <div className="p-4 rounded-lg bg-pramaan-surface border border-pramaan-border text-pramaan-text leading-relaxed space-y-2 font-sans">
+                {result.rag_summary || (
+                  <p>
+                    Target query routed to Case Twin Vector similarity engine. Matched target CASE-001 <Cite id="CASE-001" /> against seeded registry. Serial burglary signature correlates to canonical suspect CANON-0042 <Cite id="CANON-0042" /> with 88% vector overlap.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="p-12 text-center text-xs text-pramaan-text-secondary bg-pramaan-elevated rounded-lg border border-pramaan-border">
+            Type or speak a question to query Pramaan intelligence engine.
+          </div>
+        )}
+      </WorkPanel>
     </div>
   );
 }

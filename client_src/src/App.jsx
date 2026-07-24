@@ -15,6 +15,7 @@ import AssistantView from './components/views/AssistantView';
 import AuditView from './components/views/AuditView';
 import HelpDeskView from './components/views/HelpDeskView';
 import { RestrictedView } from './components/common/RestrictedView';
+import { CommandPalette } from './components/common/CommandPalette';
 import { canAccessView, firstAllowedView } from './access';
 
 export default function App() {
@@ -25,6 +26,7 @@ export default function App() {
     return sessionStorage.getItem('pramaan_authenticated') === 'true';
   });
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [language, setLanguage] = useState('EN');
   const [userProfile, setUserProfile] = useState({
     role: 'ACP',
@@ -70,7 +72,7 @@ export default function App() {
   // MANDATORY LOGIN FIRST: If unauthenticated, show full-screen Login View before accessing data
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#07090c] font-sans text-pramaan-text flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#0B0E14] font-sans text-pramaan-text flex items-center justify-center p-4">
         <LoginView onLogin={handleLogin} />
       </div>
     );
@@ -79,6 +81,19 @@ export default function App() {
   return (
     <div className="flex min-h-screen flex-col overflow-hidden bg-pramaan-bg font-sans text-pramaan-text relative">
       {showLoginModal && <LoginView onLogin={handleLogin} />}
+
+      <CommandPalette
+        isOpen={showCommandPalette}
+        onClose={() => setShowCommandPalette(false)}
+        onNavigate={(viewId) => {
+          if (canAccessView(activeRole, viewId)) {
+            setView(viewId);
+          } else {
+            setView(viewId);
+          }
+        }}
+        activeRole={activeRole}
+      />
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <Sidebar active={view} onChange={setView} activeRole={activeRole} language={language} />
@@ -91,6 +106,7 @@ export default function App() {
             onLogout={handleLogout}
             language={language}
             onLanguageToggle={toggleLanguage}
+            onOpenCommandPalette={() => setShowCommandPalette(true)}
           />
           <div className="min-h-0 flex-1 overflow-auto p-3 sm:p-4 lg:p-5">
             {!viewAllowed && (
@@ -103,16 +119,16 @@ export default function App() {
             )}
             {viewAllowed && (
               <>
-                {view === 'overview' && <OverviewView onOpenCase={() => setView('cases')} />}
-                {view === 'cases' && <CasesView />}
-                {view === 'alerts' && <AlertsView />}
-                {view === 'map' && <LiveMapView />}
-                {view === 'graph' && <EntityGraphView />}
-                {view === 'similar' && <SimilarCasesView />}
-                {view === 'resolution' && <ResolutionView />}
-                {view === 'assistant' && <AssistantView />}
-                {view === 'audit' && <AuditView />}
-                {view === 'helpdesk' && <HelpDeskView />}
+                {view === 'overview' && <OverviewView onOpenCase={() => setView('cases')} activeRole={activeRole} />}
+                {view === 'cases' && <CasesView activeRole={activeRole} />}
+                {view === 'alerts' && <AlertsView activeRole={activeRole} />}
+                {view === 'map' && <LiveMapView activeRole={activeRole} />}
+                {view === 'graph' && <EntityGraphView activeRole={activeRole} />}
+                {view === 'similar' && <SimilarCasesView activeRole={activeRole} />}
+                {view === 'resolution' && <ResolutionView activeRole={activeRole} />}
+                {view === 'assistant' && <AssistantView activeRole={activeRole} />}
+                {view === 'audit' && <AuditView activeRole={activeRole} />}
+                {view === 'helpdesk' && <HelpDeskView activeRole={activeRole} />}
               </>
             )}
           </div>
