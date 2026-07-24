@@ -61,7 +61,7 @@ export default function App() {
       {showLoginModal && <LoginView onLogin={handleLogin} />}
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <Sidebar active={view} onChange={setView} activeRole={activeRole} />
+        <Sidebar active={view} onChange={setView} activeRole={activeRole} language={language} />
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <TopBar
             view={view}
