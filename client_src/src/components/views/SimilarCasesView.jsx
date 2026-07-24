@@ -22,11 +22,15 @@ export default function SimilarCasesView() {
     setError('');
     const res = await api.matchCaseTwin(targetCase, candidateCases, 3);
     setPending(false);
-    if (res.ok && res.data) {
-      setResult({ ...res.data, mode: res.mode || 'live' });
-    } else {
-      setResult({ top_matches: fallbackMatches, flagged_linkages: fallbackMatches.filter((m) => m.shared_confirmed_suspect), mode: 'seed_preview' });
-    }
+    const data = res?.data || {};
+    const topMatches = data.top_matches || data.ranked_similarity || fallbackMatches;
+    const flaggedLinks = data.flagged_linkages || data.flagged_shared_suspect || fallbackMatches.filter((m) => m.shared_confirmed_suspect);
+    
+    setResult({
+      top_matches: topMatches,
+      flagged_linkages: flaggedLinks,
+      mode: res.mode || 'live'
+    });
   }
 
   return (

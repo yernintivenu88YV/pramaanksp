@@ -46,12 +46,12 @@ function getSeedFallback(endpoint, bodyData) {
     return {
       mode: 'seed_fallback',
       top_matches: [
-        { case_id: 'CASE-002', total_score: 0.821, shared_confirmed_suspect: true, breakdown: { mo: 0.93, location: 0.98, time: 0.90 } },
-        { case_id: 'CASE-003', total_score: 0.432, shared_confirmed_suspect: false, breakdown: { mo: 0.45, location: 0.60, time: 0.25 } },
-        { case_id: 'CASE-005', total_score: 0.291, shared_confirmed_suspect: true, breakdown: { mo: 0.10, location: 0.20, time: 0.50 } }
+        { case_id: 'CASE-002', crime_type: 'Burglary', modus_operandi: 'Rear window entry with crowbar, late night', total_score: 0.821, shared_confirmed_suspect: false, breakdown: { location: 0.42, time: 0.78, mo: 0.91, weapon: 1.0, narrative: 0.84 } },
+        { case_id: 'CASE-003', crime_type: 'Burglary', modus_operandi: 'Front door lock picked during daytime while owners away', total_score: 0.432, shared_confirmed_suspect: false, breakdown: { location: 0.56, time: 0.22, mo: 0.48, weapon: 0.5, narrative: 0.31 } },
+        { case_id: 'CASE-005', crime_type: 'Vehicle theft', modus_operandi: 'Motorcycle stolen from parking area', total_score: 0.291, shared_confirmed_suspect: true, breakdown: { location: 0.08, time: 0.34, mo: 0.19, weapon: 0.5, narrative: 0.20 } }
       ],
       flagged_linkages: [
-        { case_id: 'CASE-002', shared_confirmed_suspect: true }
+        { case_id: 'CASE-005', crime_type: 'Vehicle theft', shared_confirmed_suspect: true }
       ]
     };
   }
