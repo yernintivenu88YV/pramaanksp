@@ -108,11 +108,11 @@ export function TopBar({
             )}
           </button>
 
-          {/* Notifications Dropdown Drawer */}
+          {/* Notifications Dropdown Drawer - 100% Solid Black Opaque (#0B0E14) */}
           {showNotifications && (
-            <div className="absolute right-0 top-full mt-2 w-84 sm:w-[420px] max-w-[92vw] rounded-2xl border border-pramaan-border bg-pramaan-surface shadow-2xl overflow-hidden z-[2500]">
-              {/* Header Header Bar */}
-              <div className="border-b border-pramaan-border p-3.5 bg-pramaan-elevated/90 space-y-2">
+            <div className="absolute right-0 top-full mt-2 w-84 sm:w-[420px] max-w-[92vw] rounded-2xl border-2 border-pramaan-border bg-[#0B0E14] shadow-[0_25px_60px_rgba(0,0,0,0.95)] overflow-hidden z-[3000]">
+              {/* Solid Header Header Bar */}
+              <div className="border-b border-pramaan-border p-3.5 bg-[#121722] space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="flex h-6 w-6 items-center justify-center rounded-full bg-pramaan-primary/20 text-pramaan-primary">
@@ -127,7 +127,7 @@ export function TopBar({
                   </div>
                   <button
                     onClick={() => setShowNotifications(false)}
-                    className="p-1 rounded-md text-pramaan-text-secondary hover:text-pramaan-text hover:bg-pramaan-surface transition-colors cursor-pointer"
+                    className="p-1 rounded-md text-pramaan-text-secondary hover:text-pramaan-text hover:bg-[#1A2130] transition-colors cursor-pointer"
                   >
                     <X size={15} />
                   </button>
@@ -156,10 +156,10 @@ export function TopBar({
                 </div>
               </div>
 
-              {/* Scrollable Alerts Stream List */}
-              <div className="max-h-80 overflow-y-auto divide-y divide-pramaan-border/60 p-1.5">
+              {/* Scrollable Alerts Stream List (Solid Background) */}
+              <div className="max-h-80 overflow-y-auto divide-y divide-pramaan-border/60 p-2 bg-[#0B0E14]">
                 {notifications.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-pramaan-text-secondary space-y-1">
+                  <div className="p-8 text-center text-xs text-pramaan-text-secondary space-y-1 bg-[#0B0E14]">
                     <Check size={20} className="mx-auto text-pramaan-success" />
                     <p className="font-semibold text-pramaan-text">All alerts cleared</p>
                     <p className="text-[11px] text-pramaan-text-secondary">No active threat alerts in stream</p>
@@ -170,8 +170,8 @@ export function TopBar({
                       key={n.id}
                       className={`p-3 rounded-xl transition-all ${
                         n.unread
-                          ? 'bg-pramaan-primary/10 border border-pramaan-primary/20'
-                          : 'hover:bg-pramaan-elevated/60'
+                          ? 'bg-[#182030] border border-pramaan-primary/40'
+                          : 'bg-[#121722] hover:bg-[#1A2130] border border-pramaan-border/50'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
