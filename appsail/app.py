@@ -85,10 +85,11 @@ async def rbac_gateway_middleware(request: Request, call_next):
             "/server/graph_fn/communities",
             "/server/graph_fn/hotspots",
             "/server/graph_fn/priority",
+            "/server/graph_fn/traverse",
             "/server/rag/query",
             "/server/rag/search",
             "/server/rag/upload"
-        ) or path.startswith("/server/rag/"):
+        ) or path.startswith("/server/rag/") or path.startswith("/server/graph_fn/"):
             resource_needed = "aggregate_analytics"
             
         role_str = repo.get_user_role(dict(request.headers))
