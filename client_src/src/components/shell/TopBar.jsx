@@ -16,7 +16,7 @@ const titles = {
 
 const roles = ['SI', 'IO', 'ACP', 'Analyst', 'Policy'];
 
-export function TopBar({ view, activeRole, onRoleChange, onOpenLoginModal, language, onLanguageToggle }) {
+export function TopBar({ view, activeRole, onRoleChange, onOpenLoginModal, onLogout, language, onLanguageToggle }) {
   const meta = titles[view] || titles.overview;
   const [mode, setMode] = useState('search');
 
@@ -88,6 +88,17 @@ export function TopBar({ view, activeRole, onRoleChange, onOpenLoginModal, langu
             <Shield size={12} />
             <span className="hidden sm:inline">Switch Role</span>
           </button>
+
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="flex h-7 items-center gap-1 rounded bg-pramaan-critical/10 px-2 text-[11px] font-semibold text-pramaan-critical hover:bg-pramaan-critical/20 transition-colors"
+              title="Lock System & Sign Out"
+            >
+              <LogOut size={12} />
+              <span className="hidden sm:inline">Lock</span>
+            </button>
+          )}
         </div>
 
         <IconBtn icon={Bell} dot />

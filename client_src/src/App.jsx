@@ -20,6 +20,9 @@ export default function App() {
   const [activeRole, setActiveRole] = useState(getApiRole());
   const [view, setView] = useState('overview');
   const [syncing, setSyncing] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return sessionStorage.getItem('pramaan_authenticated') === 'true';
+  });
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [language, setLanguage] = useState('EN');
   const [userProfile, setUserProfile] = useState({
@@ -39,7 +42,14 @@ export default function App() {
   const handleLogin = (profile) => {
     setUserProfile(profile);
     handleRoleChange(profile.role);
+    setIsAuthenticated(true);
+    sessionStorage.setItem('pramaan_authenticated', 'true');
     setShowLoginModal(false);
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem('pramaan_authenticated');
   };
 
   const toggleLanguage = () => {
@@ -56,6 +66,15 @@ export default function App() {
     return () => clearInterval(t);
   }, []);
 
+  // MANDATORY LOGIN FIRST: If unauthenticated, show full-screen Login View before accessing data
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#07090c] font-sans text-pramaan-text flex items-center justify-center p-4">
+        <LoginView onLogin={handleLogin} />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col overflow-hidden bg-pramaan-bg font-sans text-pramaan-text relative">
       {showLoginModal && <LoginView onLogin={handleLogin} />}
@@ -68,6 +87,7 @@ export default function App() {
             activeRole={activeRole}
             onRoleChange={handleRoleChange}
             onOpenLoginModal={() => setShowLoginModal(true)}
+            onLogout={handleLogout}
             language={language}
             onLanguageToggle={toggleLanguage}
           />
