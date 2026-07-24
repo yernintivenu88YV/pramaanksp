@@ -50,7 +50,7 @@ export default function OverviewView({ onOpenCase, activeRole = 'ACP' }) {
 
   useEffect(() => {
     fetchPriority();
-  }, []);
+  }, [weights]);
 
   const refresh = () => {
     setRefreshing(true);
