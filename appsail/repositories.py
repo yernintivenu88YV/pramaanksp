@@ -109,17 +109,67 @@ class CatalystRepository:
         # Data Store. Live mode writes the real tables instead.
         self._conversation_fallback = []
         self._audit_fallback = []
+        # Why we fell back (surfaced by /server/gateway_fn/health) -- turns an
+        # opaque "seed_fallback" into a readable cause (missing table, wrong
+        # environment, SDK init failure, ...).
+        self._fallback_reason = "not initialized yet (no request context at startup)"
+        self._sdk_initialized = False
+        # NOTE: the Catalyst SDK is deliberately NOT initialized here.
+        # See _ensure_app().
+        self._is_fallback = True
+
+    def init_from_request(self, request):
+        """
+        Called by the HTTP middleware on every request.
+
+        AppSail does not populate the SDK's thread-local Catalyst headers, so
+        `zcatalyst_sdk.initialize()` with no argument always raises
+        "Catalyst headers are empty". The SDK accepts a `req` object and
+        reads `req.headers` from it -- a FastAPI Request satisfies that -- so
+        the headers Catalyst injects per request are what actually authorize
+        the Data Store connection.
+        """
+        return self._ensure_app(req=request)
+
+    def _ensure_app(self, req=None):
+        """
+        Initialize the Catalyst SDK LAZILY, from a live request.
+
+        Initializing at module-import/startup can never work on AppSail
+        (no request => no Catalyst headers), which would pin the process to
+        seed_fallback forever no matter how the Data Store is set up.
+
+        Retries on each call until it succeeds, then caches the app.
+        """
+        if self._sdk_initialized:
+            return self.app
         try:
-            # Attempt to initialize Catalyst SDK
-            self.app = zcatalyst_sdk.initialize()
-            # Test database check to ensure connectivity
+            self.app = (
+                zcatalyst_sdk.initialize(req=req) if req is not None
+                else zcatalyst_sdk.initialize()
+            )
+            # Verify the Data Store is genuinely reachable before going live.
             self.app.zcql().execute_query("SELECT ROWID FROM AccessAuditLog LIMIT 1")
-            logger.info("Catalyst SDK successfully initialized and verified.")
+            self._sdk_initialized = True
+            self._is_fallback = False
+            self._fallback_reason = None
+            logger.info("Catalyst SDK initialized and Data Store verified -- live mode.")
         except Exception as e:
-            logger.warning(f"Catalyst SDK failed to verify connection. Running in fallback mode: {e}")
+            self.app = None
             self._is_fallback = True
+            self._fallback_reason = f"{type(e).__name__}: {e}"
+        return self.app
+
+    def fallback_reason(self):
+        """Readable reason the repo is in fallback mode (None when live)."""
+        return self._fallback_reason
+
+    def sdk_initialized(self):
+        return self._sdk_initialized
 
     def is_fallback(self):
+        # Triggers lazy initialization on the first in-request call.
+        self._ensure_app()
         return self._is_fallback
 
     def get_user_role(self, request_headers: dict) -> str:
@@ -134,7 +184,7 @@ class CatalystRepository:
             elif "analyst" in auth_header.lower():
                 return "Analyst"
 
-        if self._is_fallback:
+        if self.is_fallback():
             return "Analyst"
             
         try:
@@ -156,7 +206,7 @@ class CatalystRepository:
             "timestamp": utc_now
         }
         
-        if self._is_fallback:
+        if self.is_fallback():
             logger.info(f"[FALLBACK AUDIT LOG] {row_data}")
             self._audit_fallback.append(row_data)
             return
@@ -171,7 +221,7 @@ class CatalystRepository:
 
     def fetch_audit_logs(self, limit: int = 50):
         """Recent access-audit rows -- the dossier's chain-of-access section."""
-        if self._is_fallback:
+        if self.is_fallback():
             return self._audit_fallback[-limit:]
         try:
             zcql = self.app.zcql()
@@ -184,7 +234,7 @@ class CatalystRepository:
             return []
 
     def get_user_id(self, request_headers: dict) -> str:
-        if self._is_fallback:
+        if self.is_fallback():
             return "local-user"
         try:
             current_user = self.app.authentication().get_current_user()
@@ -213,7 +263,7 @@ class CatalystRepository:
             "cited_record_ids": cited_record_ids,
             "timestamp": utc_now,
         }
-        if self._is_fallback:
+        if self.is_fallback():
             logger.info(f"[FALLBACK CONVERSATION LOG] session={row_data['session_id']} "
                         f"role={role} cited={cited_record_ids}")
             self._conversation_fallback.append(row_data)
@@ -225,7 +275,7 @@ class CatalystRepository:
             logger.error(f"Failed to insert conversation log: {e}")
 
     def fetch_conversation_log(self, session_id: str = None, limit: int = 200):
-        if self._is_fallback:
+        if self.is_fallback():
             rows = self._conversation_fallback
             if session_id:
                 rows = [r for r in rows if r.get("session_id") == session_id]
@@ -242,7 +292,7 @@ class CatalystRepository:
             return []
 
     def fetch_persons(self):
-        if self._is_fallback:
+        if self.is_fallback():
             return MOCK_PERSONS
         try:
             zcql = self.app.zcql()
@@ -253,7 +303,7 @@ class CatalystRepository:
             return MOCK_PERSONS
 
     def fetch_cases(self):
-        if self._is_fallback:
+        if self.is_fallback():
             return MOCK_CASES
         try:
             zcql = self.app.zcql()
@@ -288,7 +338,7 @@ class CatalystRepository:
         Persist a narrative vector computed at ingestion (see
         case_twin_fn.embed_narrative). Idempotent: re-running overwrites.
         """
-        if self._is_fallback:
+        if self.is_fallback():
             logger.info(f"[FALLBACK] would store {len(vector)}-dim vector for {case_id} ({model_id})")
             return
         try:
@@ -314,7 +364,7 @@ class CatalystRepository:
             logger.error(f"Failed to store embedding for {case_id}: {e}")
 
     def fetch_links(self):
-        if self._is_fallback:
+        if self.is_fallback():
             return MOCK_LINKS
         try:
             zcql = self.app.zcql()
@@ -332,7 +382,7 @@ class CatalystRepository:
             return MOCK_LINKS
 
     def fetch_warrants(self):
-        if self._is_fallback:
+        if self.is_fallback():
             return MOCK_WARRANTS
         try:
             zcql = self.app.zcql()

@@ -33,8 +33,25 @@ class CheckAccessRequest(BaseModel):
     resource: str
 
 @router.get("/health")
-def health():
-    return {"status": "ok", "module": "gateway_fn"}
+def health(request: Request):
+    """
+    Liveness + data-source diagnostics. `data_source` reports whether the
+    Data Store probe succeeded; when it didn't, `fallback_reason` carries the
+    actual exception so a "seed_fallback" is explainable instead of opaque.
+    """
+    repo = getattr(request.state, "repo", None)
+    body = {"status": "ok", "module": "gateway_fn"}
+    if repo is not None:
+        try:
+            is_fb = repo.is_fallback()
+            body["data_source"] = "seed_fallback" if is_fb else "live"
+            if hasattr(repo, "sdk_initialized"):
+                body["sdk_initialized"] = repo.sdk_initialized()
+            if is_fb and hasattr(repo, "fallback_reason"):
+                body["fallback_reason"] = repo.fallback_reason()
+        except Exception as e:  # never let diagnostics break liveness
+            body["diag_error"] = str(e)
+    return body
 
 @router.post("/check_access")
 def check_access(req: CheckAccessRequest, request: Request):
