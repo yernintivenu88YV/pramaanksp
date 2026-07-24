@@ -1,6 +1,6 @@
 import logging
 from typing import List
-from appsail.routers.case_twin_fn import embed_narrative
+from routers.case_twin_fn import embed_narrative
 
 logger = logging.getLogger("appsail.document_processor")
 logger.setLevel(logging.INFO)

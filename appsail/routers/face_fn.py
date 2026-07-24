@@ -6,7 +6,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Request, File, UploadFile, Form, HTTPException, status
 from pydantic import BaseModel
 
-from appsail.utils.llm_client import generate_response
+from utils.llm_client import generate_response
 from deepface import DeepFace
 
 logger = logging.getLogger("appsail.face_fn")

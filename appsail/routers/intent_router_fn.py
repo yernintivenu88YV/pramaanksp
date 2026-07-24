@@ -8,7 +8,7 @@ from pydantic import BaseModel
 import requests
 
 from rate_limit import limiter
-from appsail.utils.llm_client import generate_response
+from utils.llm_client import generate_response
 from . import bhashini
 
 logger = logging.getLogger("appsail.intent_router")

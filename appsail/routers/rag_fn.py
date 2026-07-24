@@ -4,9 +4,9 @@ from typing import Optional, List
 from fastapi import APIRouter, Request, HTTPException, status, UploadFile, File
 from pydantic import BaseModel
 
-from appsail.services.rag_agent import rag_agent
-from appsail.services.document_processor import document_processor
-from appsail.utils.llm_client import generate_response
+from services.rag_agent import rag_agent
+from services.document_processor import document_processor
+from utils.llm_client import generate_response
 from rate_limit import limiter
 
 logger = logging.getLogger("appsail.rag_fn")

@@ -2,9 +2,9 @@ import logging
 import json
 from typing import Dict, Any
 
-from appsail.utils.llm_client import generate_response
-from appsail.routers.case_twin_fn import embed_narrative
-from appsail.routers.graph_fn import TraverseRequest, traverse
+from utils.llm_client import generate_response
+from routers.case_twin_fn import embed_narrative
+from routers.graph_fn import TraverseRequest, traverse
 
 logger = logging.getLogger("appsail.rag_agent")
 logger.setLevel(logging.INFO)
