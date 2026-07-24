@@ -13,6 +13,7 @@ import SimilarCasesView from './components/views/SimilarCasesView';
 import ResolutionView from './components/views/ResolutionView';
 import AssistantView from './components/views/AssistantView';
 import AuditView from './components/views/AuditView';
+import HelpDeskView from './components/views/HelpDeskView';
 import { RestrictedView } from './components/common/RestrictedView';
 import { canAccessView, firstAllowedView } from './access';
 
@@ -111,6 +112,7 @@ export default function App() {
                 {view === 'resolution' && <ResolutionView />}
                 {view === 'assistant' && <AssistantView />}
                 {view === 'audit' && <AuditView />}
+                {view === 'helpdesk' && <HelpDeskView />}
               </>
             )}
           </div>

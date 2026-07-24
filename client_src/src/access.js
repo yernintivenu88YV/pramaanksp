@@ -42,6 +42,7 @@ export const VIEW_ACCESS = {
   similar:    { any: ['own_case_detail'],   label: 'Case Twins' },
   graph:      { any: ['own_case_detail'],   label: 'Entity Graph' },
   assistant:  { any: ['own_case_detail'],   label: 'AI Assistant' },
+  helpdesk:   { any: AGGREGATE,             label: 'Public Help Desk' },
 };
 
 export function permissionsFor(role) {

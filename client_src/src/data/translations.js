@@ -19,6 +19,7 @@ export const translations = {
     navGraph: "Entity Graph",
     navAssistant: "AI Assistant",
     navAudit: "Audit & Compliance",
+    navHelpDesk: "Public Help Desk",
 
     // Search Controls
     find: "Find",

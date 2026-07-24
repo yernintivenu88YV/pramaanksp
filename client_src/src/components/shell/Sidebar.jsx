@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   LayoutDashboard, FolderKanban, BellRing, Share2,
   MapPinned, Fingerprint, CopyCheck, ScrollText,
-  ShieldCheck, Sparkles, Lock,
+  ShieldCheck, Sparkles, Lock, HelpCircle
 } from 'lucide-react';
 import { type } from '../../design/scale';
 import { canAccessView, ROLE_LABELS, requiredPermissionFor } from '../../access';
@@ -34,7 +34,10 @@ const groupsConfig = [
   },
   {
     headingKey: 'govern',
-    items: [{ key: 'audit', labelKey: 'navAudit', icon: ScrollText }],
+    items: [
+      { key: 'audit', labelKey: 'navAudit', icon: ScrollText },
+      { key: 'helpdesk', labelKey: 'navHelpDesk', icon: HelpCircle },
+    ],
   },
 ];
 
