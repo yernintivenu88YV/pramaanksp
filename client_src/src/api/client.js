@@ -151,7 +151,7 @@ export async function apiFetch(endpoint, options = {}) {
   }
 }
 
-const P = '/server/pramaan';
+const P = '';
 
 export const api = {
   getHealth: () => apiFetch(`${P}/server/gateway_fn/health`),
