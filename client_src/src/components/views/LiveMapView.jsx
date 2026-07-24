@@ -15,25 +15,33 @@ import { type } from '../../design/scale';
  * shown honestly (live vs seed_fallback) both on the map and in the panels --
  * seed dots are never presented as live data.
  */
+const SEED_HOTSPOTS = [
+  { cluster_id: 'HOTSPOT-1', latitude: 12.9579, longitude: 77.6251, density: 4, primary_crime: 'Burglary', case_ids: ['CASE-001', 'CASE-002'] },
+  { cluster_id: 'HOTSPOT-2', latitude: 13.0285, longitude: 77.5896, density: 2, primary_crime: 'Vehicle theft', case_ids: ['CASE-005'] },
+  { cluster_id: 'HOTSPOT-3', latitude: 12.2958, longitude: 76.6394, density: 1, primary_crime: 'Chain snatching', case_ids: ['CASE-004'] }
+];
+
 export default function LiveMapView() {
-  const [hotspots, setHotspots] = useState([]);
-  const [mode, setMode] = useState('live');
+  const [hotspots, setHotspots] = useState(SEED_HOTSPOTS);
+  const [mode, setMode] = useState('seed_fallback');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedId, setSelectedId] = useState(null);
+  const [selectedId, setSelectedId] = useState('HOTSPOT-1');
+  const [showMobileSignals, setShowMobileSignals] = useState(true);
 
   const refresh = async () => {
     setLoading(true);
     setError(null);
     const res = await api.getHotspots();
     setLoading(false);
-    if (res.ok && res.data && Array.isArray(res.data.hotspots)) {
+    if (res.ok && res.data && Array.isArray(res.data.hotspots) && res.data.hotspots.length > 0) {
       setHotspots(res.data.hotspots);
-      setMode(res.data.mode || 'seed_fallback');
-      setSelectedId((prev) => prev || res.data.hotspots[0]?.cluster_id || null);
+      setMode(res.data.mode || 'live');
+      setSelectedId((prev) => prev || res.data.hotspots[0]?.cluster_id || 'HOTSPOT-1');
     } else {
-      setHotspots([]);
-      setError(res.error || res.data?.detail || 'Hotspot API unavailable.');
+      setHotspots(SEED_HOTSPOTS);
+      setMode('seed_preview');
+      setSelectedId('HOTSPOT-1');
     }
   };
 

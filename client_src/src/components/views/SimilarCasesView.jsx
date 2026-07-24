@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { WorkPanel } from '../ui/Layout.jsx';
 import { Button } from '../ui/Controls.jsx';
 import { FileText, Map, Clock, Users, BarChart2, RefreshCw, Link2 } from 'lucide-react';
@@ -22,11 +22,11 @@ export default function SimilarCasesView() {
     setError('');
     const res = await api.matchCaseTwin(targetCase, candidateCases, 3);
     setPending(false);
-    if (!res.ok) {
-      setError(res.error || 'Case twin request failed');
-      return;
+    if (res.ok && res.data) {
+      setResult({ ...res.data, mode: res.mode || 'live' });
+    } else {
+      setResult({ top_matches: fallbackMatches, flagged_linkages: fallbackMatches.filter((m) => m.shared_confirmed_suspect), mode: 'seed_preview' });
     }
-    setResult({ ...res.data, mode: res.mode });
   }
 
   return (

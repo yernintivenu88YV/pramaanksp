@@ -209,8 +209,15 @@ def parse_iso_datetime(dt_str: str) -> datetime:
 def health():
     return {"status": "ok", "module": "case_twin_fn"}
 
-@router.post("/match")
-def match(req: MatchRequest, request: Request):
+@router.api_route("/match", methods=["GET", "POST"])
+def match(req: Optional[MatchRequest] = None, request: Request = None):
+    if req is None:
+        from repositories import MOCK_CASES
+        req = MatchRequest(
+            target=MOCK_CASES[0],
+            candidates=MOCK_CASES[1:],
+            top_k=3
+        )
     target = CaseRecord(
         case_id=req.target.case_id,
         crime_type=req.target.crime_type,

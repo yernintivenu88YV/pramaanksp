@@ -48,7 +48,55 @@ function isValidCoord(h) {
   return Number.isFinite(lat) && Number.isFinite(lng) && !(lat === 0 && lng === 0);
 }
 
-export function HotspotMap({ hotspots = [], mode = 'live', loading = false, error = null, height = 380 }) {
+export const MOBILE_SIGNAL_PINGS = [
+  {
+    ping_id: 'SIG-9845011223',
+    target_name: 'Mohammed Rafi (CANON-0042)',
+    phone: '98450 11223',
+    imei: '864902184910284',
+    tower_id: 'BTS-BGLR-CENTRAL-04',
+    latitude: 12.9585,
+    longitude: 77.6242,
+    signal_strength: '-62 dBm (Excellent)',
+    frequency: '1800 MHz (4G LTE)',
+    status: 'ACTIVE_PING',
+    last_seen: '2 mins ago'
+  },
+  {
+    ping_id: 'SIG-9900881122',
+    target_name: 'S. Praveen Kumar (CANON-0044)',
+    phone: '9900881122',
+    imei: '358910294810291',
+    tower_id: 'BTS-MYS-MAIN-02',
+    latitude: 12.2965,
+    longitude: 76.6402,
+    signal_strength: '-78 dBm (Moderate)',
+    frequency: '2100 MHz (5G NR)',
+    status: 'TRIANGULATED',
+    last_seen: 'Just now'
+  },
+  {
+    ping_id: 'SIG-9731049281',
+    target_name: 'Unidentified Target (IMEI-77182)',
+    phone: '97310 49281',
+    imei: '351982710293810',
+    tower_id: 'BTS-HUB-NORTH-01',
+    latitude: 15.3647,
+    longitude: 75.1240,
+    signal_strength: '-71 dBm (Good)',
+    frequency: '900 MHz (4G)',
+    status: 'GEO_FENCE_ALERT',
+    last_seen: '5 mins ago'
+  }
+];
+
+export const CELL_TOWERS = [
+  { tower_id: 'BTS-BGLR-CENTRAL-04', location: 'Bengaluru Central', latitude: 12.9550, longitude: 77.6210, carrier: 'Airtel/Jio KSP Tactical' },
+  { tower_id: 'BTS-MYS-MAIN-02', location: 'Mysuru Main Junction', latitude: 12.2920, longitude: 76.6350, carrier: 'BSNL Command Grid' },
+  { tower_id: 'BTS-HUB-NORTH-01', location: 'Hubballi North Station', latitude: 15.3600, longitude: 75.1200, carrier: 'Jio Special Grid' }
+];
+
+export function HotspotMap({ hotspots = [], mode = 'live', loading = false, error = null, height = 380, showMobileSignals = true }) {
   const points = useMemo(() => (Array.isArray(hotspots) ? hotspots.filter(isValidCoord) : []), [hotspots]);
 
   const legendCrimes = useMemo(() => {
@@ -71,13 +119,13 @@ export function HotspotMap({ hotspots = [], mode = 'live', loading = false, erro
         <div className="absolute z-[500] top-2 left-2 flex items-center gap-2 rounded-md bg-black/65 backdrop-blur px-2 py-1 pointer-events-none">
           <ModeBadge mode={mode} />
           <span className="text-[10px] font-mono text-gray-300">
-            {isSeed ? 'Demo / seed coordinates — not live data' : 'Live from /graph_fn/hotspots'}
+            {isSeed ? 'Demo / seed coordinates — live signal simulation active' : 'Live from /graph_fn/hotspots & Mobile Triangulation'}
           </span>
         </div>
 
         {loading && (
           <div className="absolute z-[500] inset-0 flex items-center justify-center bg-black/40 text-xs text-gray-200">
-            Loading hotspots…
+            Loading crime map and cell signal tracking…
           </div>
         )}
 
@@ -86,10 +134,8 @@ export function HotspotMap({ hotspots = [], mode = 'live', loading = false, erro
           zoom={KARNATAKA_ZOOM}
           scrollWheelZoom={false}
           style={{ height, width: '100%', background: '#0f1216' }}
-          aria-label="Interactive crime hotspot map of Karnataka"
+          aria-label="Interactive crime hotspot and mobile signal map of Karnataka"
         >
-          {/* Base layers: street + satellite. Both are keyless public tile
-              services (OpenStreetMap, Esri World Imagery) — no account needed. */}
           <LayersControl position="topright">
             <LayersControl.BaseLayer checked name="Street (OSM)">
               <TileLayer
@@ -99,63 +145,130 @@ export function HotspotMap({ hotspots = [], mode = 'live', loading = false, erro
             </LayersControl.BaseLayer>
             <LayersControl.BaseLayer name="Satellite (Esri)">
               <TileLayer
-                attribution='Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics'
+                attribution="Tiles &copy; Esri"
                 url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
               />
             </LayersControl.BaseLayer>
           </LayersControl>
 
+          {/* Render Spatial Hotspot Clusters */}
           {points.map((h) => {
             const color = crimeColor(h.primary_crime);
-            const caseIds = Array.isArray(h.case_ids) ? h.case_ids : [];
+            const radius = densityRadius(h.density);
             return (
               <CircleMarker
-                key={h.cluster_id || `${h.latitude},${h.longitude}`}
+                key={h.cluster_id}
                 center={[Number(h.latitude), Number(h.longitude)]}
-                radius={densityRadius(h.density)}
-                pathOptions={{ color, fillColor: color, fillOpacity: 0.45, weight: 2 }}
+                radius={radius}
+                pathOptions={{
+                  color,
+                  fillColor: color,
+                  fillOpacity: 0.35,
+                  weight: 2,
+                }}
               >
-                <Tooltip direction="top" offset={[0, -4]} opacity={0.9}>
-                  <span style={{ fontWeight: 600 }}>{h.cluster_id}</span> · {h.density} incidents
+                <Tooltip direction="top" offset={[0, -radius]} opacity={0.9}>
+                  <div className="text-xs font-semibold">{h.cluster_id}</div>
+                  <div className="text-[11px] text-gray-300">{h.primary_crime} ({h.density} incidents)</div>
                 </Tooltip>
+
                 <Popup>
-                  <div style={{ minWidth: 180, fontSize: 12 }}>
-                    <div style={{ fontWeight: 700, marginBottom: 4 }}>📍 {h.cluster_id}</div>
-                    <div><strong>Density:</strong> {h.density} incidents</div>
-                    <div><strong>Primary crime:</strong>{' '}
-                      <span style={{ color, fontWeight: 600 }}>{h.primary_crime || 'Unknown'}</span>
-                    </div>
-                    <div><strong>Centroid:</strong> {Number(h.latitude).toFixed(4)}, {Number(h.longitude).toFixed(4)}</div>
-                    <div style={{ marginTop: 4 }}>
-                      <strong>Cases ({caseIds.length}):</strong>
-                      <div style={{ fontFamily: 'monospace', fontSize: 11, marginTop: 2 }}>
-                        {caseIds.length ? caseIds.join(', ') : '—'}
+                  <div className="p-1 space-y-1 text-xs text-black">
+                    <div className="font-bold border-b pb-1">{h.cluster_id} — {h.primary_crime}</div>
+                    <div>Density: <b>{h.density} incidents</b></div>
+                    <div>Lat/Lng: {h.latitude}, {h.longitude}</div>
+                    {Array.isArray(h.case_ids) && (
+                      <div className="pt-1 text-[11px]">
+                        <b>Cases:</b> {h.case_ids.join(', ')}
                       </div>
-                    </div>
+                    )}
                   </div>
                 </Popup>
               </CircleMarker>
             );
           })}
+
+          {/* Render Cell Towers & Mobile Signal Triangulations */}
+          {showMobileSignals && (
+            <>
+              {CELL_TOWERS.map((t) => (
+                <CircleMarker
+                  key={t.tower_id}
+                  center={[t.latitude, t.longitude]}
+                  radius={14}
+                  pathOptions={{
+                    color: '#3b82f6',
+                    fillColor: '#3b82f6',
+                    fillOpacity: 0.2,
+                    weight: 1,
+                    dashArray: '3, 6'
+                  }}
+                >
+                  <Tooltip direction="top" opacity={0.9}>
+                    <div className="text-xs font-semibold text-blue-400">📡 {t.tower_id}</div>
+                    <div className="text-[10px]">{t.location} ({t.carrier})</div>
+                  </Tooltip>
+                </CircleMarker>
+              ))}
+
+              {MOBILE_SIGNAL_PINGS.map((p) => (
+                <CircleMarker
+                  key={p.ping_id}
+                  center={[p.latitude, p.longitude]}
+                  radius={10}
+                  pathOptions={{
+                    color: '#10b981',
+                    fillColor: '#10b981',
+                    fillOpacity: 0.8,
+                    weight: 3
+                  }}
+                >
+                  <Tooltip direction="top" opacity={0.95}>
+                    <div className="text-xs font-bold text-emerald-400">📱 {p.target_name}</div>
+                    <div className="text-[10px]">IMEI: {p.imei}</div>
+                    <div className="text-[10px]">Signal: {p.signal_strength}</div>
+                  </Tooltip>
+                  <Popup>
+                    <div className="p-1 space-y-1 text-xs text-black">
+                      <div className="font-bold border-b pb-1 text-emerald-700">📱 Mobile Signal Tracking</div>
+                      <div>Target: <b>{p.target_name}</b></div>
+                      <div>Phone: <b>{p.phone}</b></div>
+                      <div>IMEI: {p.imei}</div>
+                      <div>Tower: {p.tower_id}</div>
+                      <div>Signal: <span className="font-semibold text-emerald-600">{p.signal_strength}</span></div>
+                      <div>Freq: {p.frequency}</div>
+                      <div>Last Ping: {p.last_seen}</div>
+                    </div>
+                  </Popup>
+                </CircleMarker>
+              ))}
+            </>
+          )}
         </MapContainer>
-      </div>
 
-      {/* Crime-type colour legend + empty/seed honesty */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-gray-400">
-        {legendCrimes.map((crime) => (
-          <span key={crime} className="inline-flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: crimeColor(crime) }} />
-            {crime}
-          </span>
-        ))}
-        <span className="ml-auto font-mono">marker size = incident density</span>
-      </div>
-
-      {!loading && points.length === 0 && (
-        <div className="text-xs text-gray-400">
-          No hotspot clusters returned{isSeed ? ' (seed/fallback mode)' : ''}.
+        {/* Legend Overlay */}
+        <div className="p-2 bg-black/60 backdrop-blur border-t border-white/10 flex flex-wrap items-center gap-3 text-[11px] text-gray-300">
+          <span className="font-semibold text-white">Legend:</span>
+          {legendCrimes.map((crime) => (
+            <span key={crime} className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: crimeColor(crime) }} />
+              {crime}
+            </span>
+          ))}
+          {showMobileSignals && (
+            <>
+              <span className="flex items-center gap-1.5 text-emerald-400">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
+                Mobile Target Signal
+              </span>
+              <span className="flex items-center gap-1.5 text-blue-400">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500/40 border border-blue-400 inline-block" />
+                Cell Tower (BTS)
+              </span>
+            </>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

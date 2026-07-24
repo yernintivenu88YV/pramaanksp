@@ -247,8 +247,10 @@ def communities():
     finally:
         driver.close()
 
-@router.post("/priority")
-def priority(req: PriorityRequest, request: Request):
+@router.api_route("/priority", methods=["GET", "POST"])
+def priority(req: Optional[PriorityRequest] = None, request: Request = None):
+    if req is None:
+        req = PriorityRequest()
     repo = request.state.repo
     links = repo.fetch_links()
     cases_list = repo.fetch_cases()
