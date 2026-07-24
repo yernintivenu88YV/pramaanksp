@@ -14,14 +14,7 @@ os.chdir(current_dir)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("appsail.run")
 
-pip_output = ""
-try:
-    logger.info("Running manual pip install for diagnostics...")
-    pip_output = subprocess.check_output([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"], stderr=subprocess.STDOUT).decode("utf-8")
-except subprocess.CalledProcessError as e:
-    pip_output = f"PIP INSTALL FAILED with code {e.returncode}:\n{e.output.decode('utf-8')}"
-except Exception as e:
-    pip_output = f"PIP INSTALL EXCEPTION: {e}"
+pip_output = "Disabled manual pip install to avoid startup timeouts."
 
 
 
