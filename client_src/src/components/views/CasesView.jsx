@@ -13,7 +13,11 @@ export default function CasesView({ activeRole = 'ACP' }) {
   const [activeTab, setActiveTab] = useState('Overview');
 
   const filteredCases = cases.filter((c) => {
-    if (filterStatus !== 'all' && c.status.toLowerCase() !== filterStatus) return false;
+    if (filterStatus !== 'all') {
+      const st = c.status ? c.status.toLowerCase() : '';
+      if (filterStatus === 'review' && !st.includes('review') && !st.includes('investigation')) return false;
+      if (filterStatus !== 'review' && !st.includes(filterStatus)) return false;
+    }
     if (
       searchQuery &&
       !c.id.toLowerCase().includes(searchQuery.toLowerCase()) &&
