@@ -39,7 +39,7 @@ const groups = [
 
 export function Sidebar({ active, onChange, activeRole = 'SI' }) {
   const [collapsed, setCollapsed] = useState(false);
-  const w = collapsed ? 'w-16' : 'w-60';
+  const w = collapsed ? 'w-16' : 'w-16 md:w-60';
 
   return (
     <aside className={`flex h-full ${w} shrink-0 flex-col border-r border-pramaan-border bg-sidebar transition-[width] duration-200`}>

@@ -72,7 +72,14 @@ export default function App() {
             onLanguageToggle={toggleLanguage}
           />
           <div className="min-h-0 flex-1 overflow-auto p-3 sm:p-4 lg:p-5">
-            {!viewAllowed && <RestrictedView viewKey={view} activeRole={activeRole} />}
+            {!viewAllowed && (
+              <RestrictedView
+                viewKey={view}
+                activeRole={activeRole}
+                onRoleChange={handleRoleChange}
+                onOpenLoginModal={() => setShowLoginModal(true)}
+              />
+            )}
             {viewAllowed && (
               <>
                 {view === 'overview' && <OverviewView onOpenCase={() => setView('cases')} />}

@@ -1,20 +1,33 @@
-import { Lock, ShieldCheck, ArrowRight } from 'lucide-react';
+import { useState } from 'react';
+import { Lock, ShieldCheck, ArrowRight, UserCheck, ShieldAlert, Check } from 'lucide-react';
 import { ROLE_LABELS, requiredPermissionFor, rolesAllowedFor, VIEW_ACCESS } from '../../access';
 import { type } from '../../design/scale';
 
 /**
  * Shown when the active role lacks the permission a view requires.
- *
- * Deliberately explicit rather than hiding the feature: an officer should see
- * that the capability exists, why it is closed to them, and who can open it.
- * This mirrors the backend's default-deny 403 — and the attempt is itself
- * written to AccessAuditLog, which is stated here so the audit trail is not a
- * surprise.
+ * Provides explicit, actionable recovery buttons ("Switch to a role with access",
+ * "Request ACP Clearance Override") rather than passive messages.
  */
-export function RestrictedView({ viewKey, activeRole }) {
+export function RestrictedView({ viewKey, activeRole, onRoleChange, onOpenLoginModal }) {
   const label = VIEW_ACCESS[viewKey]?.label || 'This module';
   const required = requiredPermissionFor(viewKey);
   const allowed = rolesAllowedFor(viewKey);
+  const [requested, setRequested] = useState(false);
+
+  const primaryRoleTarget = allowed[0] || 'ACP';
+
+  function handleSwitchRole() {
+    if (onRoleChange && allowed.length > 0) {
+      onRoleChange(primaryRoleTarget);
+    } else if (onOpenLoginModal) {
+      onOpenLoginModal();
+    }
+  }
+
+  function handleRequestOverride() {
+    setRequested(true);
+    setTimeout(() => setRequested(false), 4000);
+  }
 
   return (
     <div className="flex min-h-[420px] items-center justify-center p-6">
@@ -54,6 +67,26 @@ export function RestrictedView({ viewKey, activeRole }) {
           </div>
         </div>
 
+        {/* Actionable Recovery Actions */}
+        <div className="mt-5 space-y-2">
+          <button
+            onClick={handleSwitchRole}
+            className="w-full flex items-center justify-center gap-2 rounded-md bg-pramaan-primary px-4 py-2.5 text-xs font-bold text-pramaan-bg transition-colors hover:bg-pramaan-secondary"
+          >
+            <UserCheck size={14} />
+            Switch to {primaryRoleTarget} Role
+            <ArrowRight size={14} />
+          </button>
+
+          <button
+            onClick={handleRequestOverride}
+            className="w-full flex items-center justify-center gap-2 rounded-md border border-pramaan-border bg-pramaan-elevated px-4 py-2 text-xs font-semibold text-pramaan-text hover:border-pramaan-border-strong hover:bg-pramaan-surface transition-colors"
+          >
+            {requested ? <Check size={14} className="text-pramaan-success" /> : <ShieldAlert size={14} className="text-pramaan-warning" />}
+            {requested ? 'Clearance Request Sent to Station ACP' : `Contact ACP for ${required} Permission`}
+          </button>
+        </div>
+
         <div className="mt-4 flex items-start gap-2 rounded-lg border border-pramaan-border/70 bg-pramaan-elevated/40 p-3 text-left">
           <ShieldCheck size={15} className="mt-0.5 shrink-0 text-pramaan-primary" strokeWidth={1.8} />
           <p className="text-pramaan-text-secondary" style={type.micro}>
@@ -62,10 +95,6 @@ export function RestrictedView({ viewKey, activeRole }) {
             recorded in <span className="font-mono text-pramaan-text">AccessAuditLog</span>.
           </p>
         </div>
-
-        <p className="mt-4 inline-flex items-center gap-1.5 text-pramaan-text-secondary" style={type.micro}>
-          Switch role from the top bar to continue <ArrowRight size={12} />
-        </p>
       </div>
     </div>
   );

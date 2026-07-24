@@ -181,20 +181,26 @@ export function NLVoiceQueryBar() {
               </span>
             </div>
 
-            <div className="text-xs space-y-2">
-              <div>
-                <span className="text-gray-400">LLM Structured Parameters:</span>
-                <pre className="bg-[#0b0d10] p-2.5 rounded text-cyan-300 font-mono text-[11px] mt-1 overflow-x-auto">
-                  {JSON.stringify(result.classification, null, 2)}
-                </pre>
-              </div>
+            <div className="text-xs space-y-3">
+              {/* Structured Parameters Summary */}
+              {result.classification && (
+                <div className="rounded bg-[#0b0d10] p-3 border border-white/5 space-y-2">
+                  <span className="text-xs font-semibold text-gray-300">Structured Parameters:</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
+                    {Object.entries(result.classification).map(([key, val]) => (
+                      <div key={key} className="flex flex-col bg-white/5 p-2 rounded">
+                        <span className="text-gray-400 text-[10px]">{key}</span>
+                        <span className="text-cyan-300 truncate">{typeof val === 'object' ? JSON.stringify(val) : String(val)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-              {result.response && (
-                <div>
-                  <span className="text-gray-400">Routed Response Output:</span>
-                  <pre className="bg-[#0b0d10] p-2.5 rounded text-emerald-300 font-mono text-[11px] mt-1 overflow-x-auto">
-                    {JSON.stringify(result.response, null, 2)}
-                  </pre>
+              {/* RAG Summary Card */}
+              {result.rag_summary && (
+                <div className="rounded bg-emerald-500/10 border border-emerald-500/20 p-3 text-xs text-emerald-300 whitespace-pre-wrap">
+                  {result.rag_summary}
                 </div>
               )}
             </div>
