@@ -2,9 +2,10 @@ import { useState } from 'react';
 import {
   LayoutDashboard, FolderKanban, BellRing, Share2,
   MapPinned, Fingerprint, CopyCheck, ScrollText,
-  Settings, ShieldCheck, ChevronsLeft, Sparkles,
+  Settings, ShieldCheck, ChevronsLeft, Sparkles, Lock,
 } from 'lucide-react';
 import { type } from '../../design/scale';
+import { canAccessView, ROLE_LABELS, requiredPermissionFor } from '../../access';
 
 const groups = [
   {
@@ -36,7 +37,7 @@ const groups = [
   },
 ];
 
-export function Sidebar({ active, onChange }) {
+export function Sidebar({ active, onChange, activeRole = 'SI' }) {
   const [collapsed, setCollapsed] = useState(false);
   const w = collapsed ? 'w-16' : 'w-60';
 
@@ -61,12 +62,34 @@ export function Sidebar({ active, onChange }) {
             <div className="flex flex-col gap-0.5">
               {g.items.map(({ key, label, icon: Icon, badge }) => {
                 const on = active === key;
+                // Role gating: locked modules stay visible (so the capability
+                // is discoverable and the governance boundary is explicit),
+                // but are not navigable for roles lacking the permission.
+                const allowed = canAccessView(activeRole, key);
+                const lockTitle = allowed
+                  ? (collapsed ? label : undefined)
+                  : `${label} — requires ${requiredPermissionFor(key)} (your role: ${activeRole} · ${ROLE_LABELS[activeRole] || ''})`;
                 return (
-                  <button key={key} onClick={() => onChange(key)} title={collapsed ? label : undefined} className={`group relative flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left transition-colors ${on ? 'bg-pramaan-primary/12 text-pramaan-text' : 'text-pramaan-text-secondary hover:bg-pramaan-elevated hover:text-pramaan-text'}`} style={type.label}>
-                    {on && <span className="absolute inset-y-1 left-0 w-0.5 rounded-full bg-pramaan-primary" />}
-                    <Icon size={16} strokeWidth={1.75} className={`shrink-0 ${on ? 'text-pramaan-primary' : ''}`} />
+                  <button
+                    key={key}
+                    onClick={() => onChange(key)}
+                    disabled={!allowed}
+                    aria-disabled={!allowed}
+                    title={lockTitle}
+                    className={`group relative flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left transition-colors ${
+                      !allowed
+                        ? 'cursor-not-allowed text-pramaan-text-secondary/35'
+                        : on
+                          ? 'bg-pramaan-primary/12 text-pramaan-text'
+                          : 'text-pramaan-text-secondary hover:bg-pramaan-elevated hover:text-pramaan-text'
+                    }`}
+                    style={type.label}
+                  >
+                    {on && allowed && <span className="absolute inset-y-1 left-0 w-0.5 rounded-full bg-pramaan-primary" />}
+                    <Icon size={16} strokeWidth={1.75} className={`shrink-0 ${on && allowed ? 'text-pramaan-primary' : ''}`} />
                     {!collapsed && <span className="flex-1 truncate">{label}</span>}
-                    {!collapsed && badge != null && <span className="tnum rounded bg-pramaan-panel px-1.5 text-pramaan-text-secondary" style={type.micro}>{badge}</span>}
+                    {!collapsed && !allowed && <Lock size={12} className="shrink-0 text-pramaan-text-secondary/45" />}
+                    {!collapsed && allowed && badge != null && <span className="tnum rounded bg-pramaan-panel px-1.5 text-pramaan-text-secondary" style={type.micro}>{badge}</span>}
                   </button>
                 );
               })}

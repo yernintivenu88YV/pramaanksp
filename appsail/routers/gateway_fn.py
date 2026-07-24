@@ -49,6 +49,8 @@ def health(request: Request):
                 body["sdk_initialized"] = repo.sdk_initialized()
             if is_fb and hasattr(repo, "fallback_reason"):
                 body["fallback_reason"] = repo.fallback_reason()
+            if hasattr(repo, "last_conv_error"):
+                body["conversation_log_error"] = repo.last_conv_error()
         except Exception as e:  # never let diagnostics break liveness
             body["diag_error"] = str(e)
     return body

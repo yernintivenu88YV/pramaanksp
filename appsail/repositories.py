@@ -114,6 +114,7 @@ class CatalystRepository:
         # environment, SDK init failure, ...).
         self._fallback_reason = "not initialized yet (no request context at startup)"
         self._sdk_initialized = False
+        self._last_conv_error = None
         # NOTE: the Catalyst SDK is deliberately NOT initialized here.
         # See _ensure_app().
         self._is_fallback = True
@@ -163,6 +164,9 @@ class CatalystRepository:
     def fallback_reason(self):
         """Readable reason the repo is in fallback mode (None when live)."""
         return self._fallback_reason
+
+    def last_conv_error(self):
+        return self._last_conv_error
 
     def sdk_initialized(self):
         return self._sdk_initialized
@@ -268,11 +272,45 @@ class CatalystRepository:
                         f"role={role} cited={cited_record_ids}")
             self._conversation_fallback.append(row_data)
             return
-        try:
-            self.app.datastore().table("ConversationLog").insert_row(row_data)
-            logger.info(f"Conversation log inserted for session {row_data['session_id']}")
-        except Exception as e:
-            logger.error(f"Failed to insert conversation log: {e}")
+        # Data Store columns have finite widths, and an over-long value fails
+        # the whole insert with INVALID_INPUT. Try the full row first, then
+        # progressively shorter variants, so a long answer degrades the stored
+        # detail instead of losing the audit row entirely. (The conversation
+        # PDF renders timestamp/role/query/cited-records, not response_text,
+        # so trimming the response is lossless for the export.)
+        variants = [
+            row_data,
+            {**row_data, "response_text": (response_text or "")[:1000]},
+            {**row_data, "response_text": (response_text or "")[:255],
+             "query_text": (query_text or "")[:1000],
+             "cited_record_ids": (cited_record_ids or "")[:255]},
+            {**row_data, "response_text": "",
+             "query_text": (query_text or "")[:255],
+             "cited_record_ids": (cited_record_ids or "")[:255]},
+            # `timestamp` may be reserved / typed DateTime in the Data Store;
+            # Catalyst auto-populates CREATEDTIME, so dropping it is safe.
+            {k: v for k, v in row_data.items() if k != "timestamp"},
+            {k: v for k, v in row_data.items()
+             if k not in ("timestamp", "user_id", "response_text")},
+            {"session_id": row_data["session_id"], "role": role,
+             "query_text": (query_text or "")[:255],
+             "cited_record_ids": (cited_record_ids or "")[:255]},
+        ]
+        last_err = None
+        for attempt, candidate in enumerate(variants, 1):
+            try:
+                self.app.datastore().table("ConversationLog").insert_row(candidate)
+                self._last_conv_error = None
+                logger.info(
+                    f"Conversation log inserted for session {row_data['session_id']} "
+                    f"(variant {attempt})")
+                return
+            except Exception as e:
+                last_err = e
+        # Surfaced via /server/gateway_fn/health so a silently-dropped write is
+        # diagnosable instead of invisible.
+        self._last_conv_error = f"insert: {type(last_err).__name__}: {last_err}"
+        logger.error(f"Failed to insert conversation log after {len(variants)} variants: {last_err}")
 
     def fetch_conversation_log(self, session_id: str = None, limit: int = 200):
         if self.is_fallback():
@@ -280,16 +318,36 @@ class CatalystRepository:
             if session_id:
                 rows = [r for r in rows if r.get("session_id") == session_id]
             return rows[-limit:]
-        try:
-            zcql = self.app.zcql()
-            where = f" WHERE session_id = '{session_id}'" if session_id else ""
-            rows = zcql.execute_query(
-                f"SELECT session_id, user_id, role, query_text, response_text, "
-                f"cited_record_ids, timestamp FROM ConversationLog{where} LIMIT {int(limit)}")
-            return [r.get("ConversationLog") for r in rows if r.get("ConversationLog")]
-        except Exception as e:
-            logger.error(f"Failed to fetch conversation log: {e}")
-            return []
+        zcql = self.app.zcql()
+        where = f" WHERE session_id = '{session_id}'" if session_id else ""
+        # Explicit column list first; fall back to SELECT * so a differently
+        # named/absent optional column (e.g. `timestamp`) can't blank the whole
+        # audit trail. CREATEDTIME is Catalyst's own row timestamp.
+        queries = [
+            f"SELECT session_id, user_id, role, query_text, response_text, "
+            f"cited_record_ids, timestamp FROM ConversationLog{where} LIMIT {int(limit)}",
+            f"SELECT * FROM ConversationLog{where} LIMIT {int(limit)}",
+        ]
+        last_err = None
+        for q in queries:
+            try:
+                rows = zcql.execute_query(q)
+                out = []
+                for r in rows:
+                    rec = r.get("ConversationLog")
+                    if not rec:
+                        continue
+                    # Normalise the timestamp field for the PDF renderer.
+                    if not rec.get("timestamp"):
+                        rec["timestamp"] = rec.get("CREATEDTIME") or rec.get("createdtime") or ""
+                    out.append(rec)
+                self._last_conv_error = None
+                return out
+            except Exception as e:
+                last_err = e
+        self._last_conv_error = f"fetch: {type(last_err).__name__}: {last_err}"
+        logger.error(f"Failed to fetch conversation log: {last_err}")
+        return []
 
     def fetch_persons(self):
         if self.is_fallback():
