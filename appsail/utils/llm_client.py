@@ -5,7 +5,7 @@ from fastapi import HTTPException, status
 logger = logging.getLogger("appsail.llm_client")
 
 # Centralized configuration
-GEMINI_MODEL_ID = "gemini-1.5-flash"
+GEMINI_MODEL_ID = "gemini-2.5-flash"
 
 def get_gemini_client():
     gemini_key = os.getenv("GEMINI_API_KEY")
