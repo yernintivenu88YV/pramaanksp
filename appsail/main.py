@@ -62,7 +62,8 @@ except BaseException as e:  # BaseException so even SystemExit/import-time exits
     # installed? wrong path? partial package?). Best-effort, never raises.
     diag = {}
     try:
-        pip_list = subprocess.run(['pip', 'list'], capture_output=True, text=True).stdout
+        import importlib.metadata
+        pip_list = [f"{dist.metadata['Name']}=={dist.version}" for dist in importlib.metadata.distributions()]
         diag['pip_list'] = pip_list
     except Exception as e:
         diag['pip_list_error'] = str(e)
