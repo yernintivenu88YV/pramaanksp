@@ -60,7 +60,17 @@ except BaseException as e:  # BaseException so even SystemExit/import-time exits
 
     # Environment diagnostics: figure out WHY an import failed (deps not
     # installed? wrong path? partial package?). Best-effort, never raises.
-    diag = {}
+    import subprocess
+        try:
+            pip_list = subprocess.run(['pip', 'list'], capture_output=True, text=True).stdout
+            pip_install = subprocess.run(['pip', 'install', '-r', 'requirements.txt'], capture_output=True, text=True)
+            diag = {
+                'pip_list': pip_list,
+                'pip_install_out': pip_install.stdout,
+                'pip_install_err': pip_install.stderr,
+            }
+        except Exception as e:
+            diag = {'error': str(e)}
     try:
         diag["sys_path"] = sys.path
         diag["cwd_listing"] = sorted(os.listdir(os.getcwd()))[:60]
