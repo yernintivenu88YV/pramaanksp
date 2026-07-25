@@ -1,5 +1,5 @@
 {
-  "stack": "python_3_12",
+  "stack": "python_3_9",
   "command": "python run_app.py",
   "buildPath": ".",
   "memory": 2048,
