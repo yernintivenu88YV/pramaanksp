@@ -1,5 +1,8 @@
 import os
-import asyncpg
+try:
+    import asyncpg
+except ImportError:
+    asyncpg = None
 import logging
 
 logger = logging.getLogger("appsail.postgres_repo")

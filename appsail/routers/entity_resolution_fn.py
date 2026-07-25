@@ -7,7 +7,10 @@ from fastapi import APIRouter, Request, HTTPException, status
 
 from rate_limit import limiter
 from pydantic import BaseModel
-from rapidfuzz.distance import JaroWinkler
+try:
+    from rapidfuzz.distance import JaroWinkler
+except ImportError:
+    JaroWinkler = None
 
 logger = logging.getLogger("appsail.entity_resolution")
 router = APIRouter(prefix="/server/entity_resolution_fn")

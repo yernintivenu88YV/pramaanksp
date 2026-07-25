@@ -6,7 +6,10 @@ import os
 from typing import Optional, List
 from fastapi import APIRouter, Request, HTTPException, status
 from pydantic import BaseModel
-from rapidfuzz.distance import JaroWinkler
+try:
+    from rapidfuzz.distance import JaroWinkler
+except ImportError:
+    JaroWinkler = None
 # NOTE: sklearn / sentence-transformers / torch / numpy are NOT imported at
 # module level. Importing them here made `from app import app` take ~15s,
 # which blew the AppSail startup port-bind window and 503'd the container.
