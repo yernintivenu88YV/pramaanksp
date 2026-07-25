@@ -12,6 +12,11 @@ if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
 os.chdir(current_dir)
 
+# Add local lib directory to sys.path for dependencies
+lib_dir = os.path.join(current_dir, 'lib')
+if os.path.exists(lib_dir) and lib_dir not in sys.path:
+    sys.path.insert(0, lib_dir)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("appsail.run")
 
