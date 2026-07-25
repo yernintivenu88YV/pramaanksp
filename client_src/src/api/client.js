@@ -117,7 +117,20 @@ export async function apiFetch(endpoint, options = {}) {
     const data = isJson ? await res.json() : await res.text();
     const exportMode = res.headers.get('X-Pramaan-Export-Mode');
 
-    if (!res.ok || res.status === 405 || res.status === 404) {
+    if (!res.ok) {
+      const errorMsg = isJson ? (data.detail || data.error || (data.data && data.data.message) || 'Backend Error') : data;
+      // Do not swallow real backend errors with seed data if it's a 500/400
+      if (res.status >= 400 && res.status !== 404 && res.status !== 405) {
+        return {
+          status: res.status,
+          ok: false,
+          data: null,
+          error: errorMsg,
+          mode: 'error',
+          contentType
+        };
+      }
+      
       const fallbackData = getSeedFallback(endpoint, bodyData);
       return {
         status: 200,
