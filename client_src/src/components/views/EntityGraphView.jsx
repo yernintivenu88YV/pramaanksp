@@ -25,7 +25,30 @@ export default function EntityGraphView({ activeRole = 'ACP' }) {
   const [clusterDetected, setClusterDetected] = useState(false);
 
   const edges = graph.edges || [];
-  const nodes = graph.nodes || [];
+  const rawNodes = graph.nodes || [];
+
+  const processedNodes = useMemo(() => {
+    const cx = 380, cy = 240, radius = 170;
+    return rawNodes.map((node, i) => {
+      let x = Number(node.x);
+      let y = Number(node.y);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        const angle = (i / Math.max(rawNodes.length, 1)) * 2 * Math.PI - Math.PI / 2;
+        x = Math.round(cx + radius * Math.cos(angle));
+        y = Math.round(cy + radius * Math.sin(angle));
+      }
+      return {
+        ...node,
+        x,
+        y,
+        label: node.label || node.id,
+        type: node.type || node.label || 'Entity',
+        risk: node.risk || 'info'
+      };
+    });
+  }, [rawNodes]);
+
+  const nodes = processedNodes;
   const nodeMap = useMemo(() => Object.fromEntries(nodes.map((n) => [n.id, n])), [nodes]);
 
   async function traverse() {

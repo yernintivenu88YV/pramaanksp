@@ -96,6 +96,12 @@ export const CELL_TOWERS = [
   { tower_id: 'BTS-HUB-NORTH-01', location: 'Hubballi North Station', latitude: 15.3600, longitude: 75.1200, carrier: 'Jio Special Grid' }
 ];
 
+export const CCTV_CAMERAS = [
+  { cctv_id: 'CCTV-INDIRANAGAR-01', location: '10th Main Junction, Indiranagar', latitude: 12.9590, longitude: 77.6255, status: 'ONLINE (4K)', angle: '360° PTZ' },
+  { cctv_id: 'CCTV-KORAMANGALA-03', location: '80ft Road, Koramangala', latitude: 12.9598, longitude: 77.6230, status: 'ONLINE (1080p)', angle: 'North-East' },
+  { cctv_id: 'CCTV-MALLESHWARAM-02', location: 'Margosa Road, Malleshwaram', latitude: 13.0290, longitude: 77.5890, status: 'RECORDING', angle: 'Fixed South' }
+];
+
 export function HotspotMap({ hotspots = [], mode = 'live', loading = false, error = null, height = 380, showMobileSignals = true }) {
   const points = useMemo(() => (Array.isArray(hotspots) ? hotspots.filter(isValidCoord) : []), [hotspots]);
 
@@ -137,7 +143,13 @@ export function HotspotMap({ hotspots = [], mode = 'live', loading = false, erro
           aria-label="Interactive crime hotspot and mobile signal map of Karnataka"
         >
           <LayersControl position="topright">
-            <LayersControl.BaseLayer checked name="Street (OSM)">
+            <LayersControl.BaseLayer checked name="Dark Command (CartoDB)">
+              <TileLayer
+                attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
+                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              />
+            </LayersControl.BaseLayer>
+            <LayersControl.BaseLayer name="Street (OSM)">
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

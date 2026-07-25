@@ -31,20 +31,19 @@ async def startup_event():
 async def shutdown_event():
     await pg_repo.close_pool()
 
-# 2. CORS Middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Restrict to specific domains in prod if needed
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# 3. Security Headers & Repository Injection Middleware
+# 2. CORS & Security Headers Middleware
 @app.middleware("http")
-async def security_headers_and_repo_middleware(request: Request, call_next):
+async def cors_and_security_middleware(request: Request, call_next):
     if request.method == "OPTIONS":
-        return await call_next(request)
+        return Response(
+            status_code=200,
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Max-Age": "86400",
+            }
+        )
 
     try:
         repo.init_from_request(request)
@@ -54,25 +53,43 @@ async def security_headers_and_repo_middleware(request: Request, call_next):
     request.state.repo = repo
     response: Response = await call_next(request)
     
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "*"
     response.headers["Content-Security-Policy"] = "default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; img-src 'self' data: https:;"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     
     return response
 
-# 4. Central RBAC Gateway Middleware
+# 3. Central RBAC Gateway Middleware
 @app.middleware("http")
 async def rbac_gateway_middleware(request: Request, call_next):
     if request.method == "OPTIONS":
-        return await call_next(request)
+        return Response(
+            status_code=200,
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Max-Age": "86400",
+            }
+        )
 
     path = request.url.path
     if path.startswith("/server/") and not path.endswith("/health") and not path.endswith("/check_access"):
         resource_needed = "own_case_detail"
-        if path in ("/server/graph_fn/communities", "/server/graph_fn/hotspots", "/server/graph_fn/priority"):
+        if path in (
+            "/server/graph_fn/communities",
+            "/server/graph_fn/hotspots",
+            "/server/graph_fn/priority",
+            "/server/graph_fn/traverse",
+            "/server/rag/query",
+            "/server/rag/search",
+            "/server/rag/upload"
+        ) or path.startswith("/server/rag/") or path.startswith("/server/graph_fn/"):
             resource_needed = "aggregate_analytics"
             
         role_str = repo.get_user_role(dict(request.headers))
@@ -99,6 +116,14 @@ async def rbac_gateway_middleware(request: Request, call_next):
             return res
             
     return await call_next(request)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # 5. Include API Routers
 app.include_router(gateway_fn.router)

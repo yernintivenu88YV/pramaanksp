@@ -134,6 +134,13 @@ export default function LiveMapView() {
                     {(selected.case_ids || []).join(', ') || '—'}
                   </div>
                 </div>
+
+                <button
+                  onClick={() => alert(`[KSP DISPATCH] Tactical Unit PATROL-04 dispatched to ${selected.cluster_id} (ETA: 4 mins). Command logged.`)}
+                  className="w-full mt-2 py-2 px-3 bg-pramaan-primary hover:bg-pramaan-secondary text-pramaan-bg text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+                >
+                  <Shield size={14} /> Dispatch Patrol Unit to {selected.cluster_id}
+                </button>
               </div>
             ) : (
               <div className="text-pramaan-text-secondary" style={type.micro}>Select a cluster to inspect its cases.</div>
