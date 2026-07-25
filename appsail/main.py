@@ -5,69 +5,12 @@ import json
 import logging
 import traceback
 import subprocess
-
-# Ensure this directory is importable and is the CWD.
-current_dir = os.path.dirname(os.path.abspath(__file__))
-if current_dir not in sys.path:
-    sys.path.insert(0, current_dir)
-os.chdir(current_dir)
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("appsail.run")
-
-pip_output = "Disabled manual pip install to avoid startup timeouts."
-
-
-
-def _listen_port() -> int:
-    val = (
-        os.environ.get("X_ZOHO_CATALYST_LISTEN_PORT")
-        or os.environ.get("PORT")
-        or os.environ.get("LISTEN_PORT")
-        or "8000"
-    )
-    try:
-        return int(val)
-    except (ValueError, TypeError):
-        return 8000
-
-
-port = _listen_port()
-
-try:
-    # Primary path: the real FastAPI app under uvicorn.
-    from app import app
-    import uvicorn
-
-    msg = f"Starting Pramaan AppSail main server on 0.0.0.0:{port} (CWD: {os.getcwd()})"
-    logger.info(msg)
-    print(msg, flush=True)
-    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
-
-except BaseException as e:  # BaseException so even SystemExit/import-time exits surface
-    tb = traceback.format_exc()
-    print(f"Main app startup FAILED: {e}\n{tb}", flush=True)
-
-    # Dependency-free diagnostic fallback. Uses ONLY the Python standard
-    # library, so it still binds and reports the real error even if fastapi /
-    # uvicorn / any pip dependency failed to install in the container. This is
-    # the difference between an opaque platform 503 and a readable traceback:
-    #   - If this server answers -> run_app.py IS executing; the JSON body is
-    #     the actual startup error to fix.
-    #   - If the platform still 503s -> run_app.py is NOT being executed at all
-    #     (the effective Startup Command isn't `python run_app.py`).
-    from http.server import BaseHTTPRequestHandler, HTTPServer
-
-    # Environment diagnostics: figure out WHY an import failed (deps not
-    # installed? wrong path? partial package?). Best-effort, never raises.
-    import subprocess
         try:
             pip_list = subprocess.run(['pip', 'list'], capture_output=True, text=True).stdout
-            pip_install = subprocess.run(['pip', 'install', '-r', 'requirements.txt'], capture_output=True, text=True)
             diag = {
                 'pip_list': pip_list,
-                'pip_install_out': pip_install.stdout,
-                'pip_install_err': pip_install.stderr,
+                'pip_install_out': 'disabled',
+                'pip_install_err': 'disabled',
             }
         except Exception as e:
             diag = {'error': str(e)}
